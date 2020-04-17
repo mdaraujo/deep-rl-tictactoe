@@ -1,6 +1,7 @@
 import gym
 import warnings
 import os
+import datetime
 
 from stable_baselines import PPO2, DQN
 from stable_baselines.bench import Monitor
@@ -90,7 +91,8 @@ def make_vec_env(env_id, n_envs=1, seed=None, start_index=0,
             # Create the monitor folder if needed
             if monitor_path is not None:
                 os.makedirs(monitor_dir, exist_ok=True)
-            env = Monitor(env, filename=monitor_path, allow_early_resets=False, info_keywords=('outcome', 'player_one'))
+            env = Monitor(env, filename=monitor_path, allow_early_resets=False,
+                          info_keywords=('outcome', 'player_one'))
 
             # Optionally, wrap the environment with the provided wrapper
             if wrapper_class is not None:
@@ -104,3 +106,10 @@ def make_vec_env(env_id, n_envs=1, seed=None, start_index=0,
         vec_env_cls = DummyVecEnv
 
     return vec_env_cls([make_env(i + start_index) for i in range(n_envs)], **vec_env_kwargs)
+
+
+def get_elapsed_time(current_time, start_time):
+    elapsed_time_seconds = current_time - start_time
+    elapsed_time_h = datetime.timedelta(seconds=elapsed_time_seconds)
+    elapsed_time_h = str(datetime.timedelta(days=elapsed_time_h.days, seconds=elapsed_time_h.seconds))
+    return elapsed_time_seconds, elapsed_time_h

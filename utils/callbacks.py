@@ -14,6 +14,7 @@ from stable_baselines.results_plotter import load_results, ts2xy
 
 from gym_tictactoe.envs.tictactoe_env import TicTacToeEnv
 
+from utils.utils import get_elapsed_time
 from utils.rl_agent import RLAgent
 from utils.test_utils import AgentTestFramework
 
@@ -88,9 +89,7 @@ class PlotTestSaveCallback(object):
         self.model.save(self.log_dir + "/" + self.alg_name)
 
         # Save train logs
-        elapsed_time_seconds = time.time() - self.start_time
-        elapsed_time_h = datetime.timedelta(seconds=elapsed_time_seconds)
-        elapsed_time_h = str(datetime.timedelta(days=elapsed_time_h.days, seconds=elapsed_time_h.seconds))
+        elapsed_time_seconds, elapsed_time_h = get_elapsed_time(time.time(), self.start_time)
 
         train_logs = {"end_episode": self.current_episode,
                       "end_mean_reward": self.mean_rewards[-1],
@@ -103,7 +102,7 @@ class PlotTestSaveCallback(object):
             json.dump(OrderedDict(train_logs), f, indent=4)
 
         # Final test
-        self.test_framework.test(train_episode=self.current_episode, elapsed_time=elapsed_time_h)
+        self.test_framework.test(train_episode=self.current_episode, train_time=elapsed_time_h)
 
         self.pbar.n = self.train_episodes
         self.pbar.update(0)
@@ -308,11 +307,9 @@ class PlotTestSaveCallback(object):
         if self.current_episode >= self.train_episodes:
             return False
 
-        elapsed_time_seconds = time.time() - self.start_time
-        elapsed_time_h = datetime.timedelta(seconds=elapsed_time_seconds)
-        elapsed_time_h = str(datetime.timedelta(days=elapsed_time_h.days, seconds=elapsed_time_h.seconds))
+        _, elapsed_time_h = get_elapsed_time(time.time(), self.start_time)
 
-        self.test_framework.test(train_episode=self.current_episode, elapsed_time=elapsed_time_h)
+        self.test_framework.test(train_episode=self.current_episode, train_time=elapsed_time_h)
 
         if self.self_play:
 

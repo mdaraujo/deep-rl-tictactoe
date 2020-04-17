@@ -1,4 +1,5 @@
 import os
+import time
 import json
 import csv
 import numpy as np
@@ -9,7 +10,7 @@ from gym_tictactoe.envs.tictactoe_env import TicTacToeEnv
 from gym_tictactoe.agents.random_agent import RandomAgent
 from gym_tictactoe.agents.min_max_agent import MinMaxAgent
 
-from utils.utils import get_env
+from utils.utils import get_env, get_elapsed_time
 from utils.rl_agent import RLAgent
 
 TEST_HEADER = ["Episodes", "First Player", "Second Player", "Wins", "Draws",
@@ -32,7 +33,9 @@ class AgentTestFramework:
         self.res_minmax_second = []
         self.train_params = None
 
-    def test(self, train_episode=None, elapsed_time=None):
+    def test(self, train_episode=None, train_time=None):
+
+        start_time = time.time()
 
         if self.verbose:
             print("\nEvaluating going first vs random in {} episodes.".format(self.num_episodes))
@@ -54,7 +57,7 @@ class AgentTestFramework:
 
         self.res_minmax_second.append(self.evaluate(self.minmax_agent, 'O'))
 
-        if not train_episode or not elapsed_time:
+        if not train_episode or not train_time:
 
             train_logs_file = Path(os.path.join(self.log_dir, "train_logs.json"))
             if train_logs_file.is_file():
@@ -63,7 +66,7 @@ class AgentTestFramework:
                     train_logs = json.load(f)
 
                     if 'elapsed_time_h' in train_logs:
-                        elapsed_time = train_logs['elapsed_time_h']
+                        train_time = train_logs['elapsed_time_h']
 
                     if 'end_episode' in train_logs:
                         train_episode = train_logs['end_episode']
@@ -72,7 +75,7 @@ class AgentTestFramework:
             with open(os.path.join(self.log_dir, 'params.json'), 'r') as f:
                 self.train_params = json.load(f, object_pairs_hook=OrderedDict)
 
-        self.train_params['elapsed_time'] = elapsed_time
+        self.train_params['train_time'] = train_time
 
         # Calculate Score
         # Average of wins versus random and draws vs minmax
@@ -86,6 +89,10 @@ class AgentTestFramework:
         rows.append([self.num_episodes, self.random_agent.name, self.test_agent.name] + self.res_random_second[-1])
         rows.append([self.num_episodes, self.test_agent.name, self.minmax_agent.name] + self.res_minmax_first[-1])
         rows.append([self.num_episodes, self.minmax_agent.name, self.test_agent.name] + self.res_minmax_second[-1])
+
+        _, test_time_h = get_elapsed_time(time.time(), start_time)
+
+        self.train_params['test_time'] = test_time_h
 
         with open(os.path.join(self.log_dir, self.out_file), 'a') as f:
             writer = csv.writer(f)
