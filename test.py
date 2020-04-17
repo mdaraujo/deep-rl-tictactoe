@@ -4,7 +4,7 @@ import warnings
 import logging
 
 from utils.rl_agent import RLAgent
-from utils.test_utils import test_agent
+from utils.test_utils import AgentTestFramework
 
 # Filter tensorflow version warnings
 # https://stackoverflow.com/questions/40426502/is-there-a-way-to-suppress-the-messages-tensorflow-prints/40426709
@@ -47,7 +47,10 @@ def main():
 
         print("Agent name:", agent.name)
 
-        test_agent(agent, sub_dir, args.episodes, verbose=args.verbose)
+        out_file = "test_{}.csv".format(args.episodes)
+
+        test_framework = AgentTestFramework(agent, args.episodes, sub_dir, out_file=out_file, verbose=args.verbose)
+        test_framework.test()
 
 
 if __name__ == "__main__":

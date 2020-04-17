@@ -15,7 +15,7 @@ from stable_baselines.results_plotter import load_results, ts2xy
 from gym_tictactoe.envs.tictactoe_env import TicTacToeEnv
 
 from utils.rl_agent import RLAgent
-from utils.test_utils import test_agent
+from utils.test_utils import AgentTestFramework
 
 
 class PlotTestSaveCallback(object):
@@ -49,6 +49,7 @@ class PlotTestSaveCallback(object):
         self.env_agent = None
         self.env = env
         self.agent = None
+        self.test_framework = None
 
         with open(self.log_dir + "/params.json", "r") as f:
             params = json.load(f)
@@ -88,19 +89,20 @@ class PlotTestSaveCallback(object):
 
         # Save train logs
         elapsed_time = time.time() - self.start_time
+        elapsed_time_h = str(datetime.timedelta(seconds=elapsed_time))
 
         train_logs = {"end_episode": self.current_episode,
                       "end_mean_reward": self.mean_rewards[-1],
                       "best_mean_reward": self.best_mean_reward,
                       "elapsed_time": elapsed_time,
-                      "elapsed_time_h": str(datetime.timedelta(seconds=elapsed_time)),
+                      "elapsed_time_h": elapsed_time_h,
                       "save_logs": self.save_logs}
 
         with open(self.log_dir + "/train_logs.json", "w") as f:
             json.dump(OrderedDict(train_logs), f, indent=4)
 
         # Final test
-        test_agent(self.agent, self.log_dir, 2000)
+        self.test_framework.test(train_episode=self.current_episode, elapsed_time=elapsed_time_h)
 
         self.pbar.n = self.train_episodes
         self.pbar.update(0)
@@ -298,13 +300,16 @@ class PlotTestSaveCallback(object):
 
         if not self.agent:
             self.agent = RLAgent(self.log_dir, model=self.model)
+            self.test_framework = AgentTestFramework(self.agent, 1000, self.log_dir, verbose=False)
         else:
             self.agent.model = self.model
 
         if self.current_episode >= self.train_episodes:
             return False
 
-        test_agent(self.agent, self.log_dir, 500, out_file="train_test_outcomes.csv", train_episode=self.current_episode)
+        elapsed_time_h = str(datetime.timedelta(seconds=time.time() - self.start_time))
+
+        self.test_framework.test(train_episode=self.current_episode, elapsed_time=elapsed_time_h)
 
         if self.self_play:
 

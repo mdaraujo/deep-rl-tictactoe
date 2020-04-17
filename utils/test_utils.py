@@ -6,7 +6,6 @@ from collections import OrderedDict
 from pathlib import Path
 
 from gym_tictactoe.envs.tictactoe_env import TicTacToeEnv
-from gym_tictactoe.agents.base import Agent
 from gym_tictactoe.agents.random_agent import RandomAgent
 from gym_tictactoe.agents.min_max_agent import MinMaxAgent
 
@@ -17,190 +16,175 @@ TEST_HEADER = ["Episodes", "First Player", "Second Player", "Wins", "Draws",
                "Losses", "Invalids", "Mean Reward"]
 
 
-def battle(agent: Agent, env_agent: Agent, player_one_char, num_episodes=1000, verbose=False):
+class AgentTestFramework:
 
-    win_count = 0
-    loss_count = 0
-    draw_count = 0
-    invalid_count = 0
+    def __init__(self, test_agent, num_episodes, log_dir, out_file="test_outcomes.csv", verbose=False):
+        self.test_agent = test_agent
+        self.num_episodes = num_episodes
+        self.log_dir = log_dir
+        self.out_file = out_file
+        self.verbose = verbose
+        self.random_agent = RandomAgent()
+        self.minmax_agent = MinMaxAgent()
+        self.res_random_first = []
+        self.res_random_second = []
+        self.res_minmax_first = []
+        self.res_minmax_second = []
+        self.train_params = None
 
-    # This function will only work for a single Environment
-    env = get_env(agent.obs_format, env_agent, player_one_char, agent.rewards)
+    def test(self, train_episode=None, elapsed_time=None):
 
-    if isinstance(env_agent, RLAgent):
-        # print("env:", env.env)
-        # print("env id:", hex(id(env.env)))
-        # print("env.self_play = True")
-        env.env.self_play = True
+        if self.verbose:
+            print("\nEvaluating going first vs random in {} episodes.".format(self.num_episodes))
 
-    all_episode_rewards = []
-    for episode in range(1, num_episodes + 1):
-        episode_rewards = []
-        done = False
-        obs = env.reset()
+        self.res_random_first.append(self.evaluate(self.random_agent, 'X'))
 
-        if verbose:
-            print("\n\nGame number {}".format(episode))
+        if self.verbose:
+            print("\nEvaluating going second vs random in {} episodes.".format(self.num_episodes))
 
-        while not done:
+        self.res_random_second.append(self.evaluate(self.random_agent, 'O'))
 
-            if verbose:
-                env.render()
+        if self.verbose:
+            print("\nEvaluating going first vs minmax in {} episodes.".format(self.num_episodes))
 
-            action = agent.play(obs)
+        self.res_minmax_first.append(self.evaluate(self.minmax_agent, 'X'))
 
-            obs, reward, done, info = env.step(action)
+        if self.verbose:
+            print("\nEvaluating going second vs minmax in {} episodes.".format(self.num_episodes))
 
-            episode_rewards.append(reward)
+        self.res_minmax_second.append(self.evaluate(self.minmax_agent, 'O'))
 
-            # if done and info['outcome'] == TicTacToeEnv.INVALID:
-            if verbose:
+        if not train_episode or not elapsed_time:
 
-                naught_action = -1
-                if 'naught_action' in info:
-                    naught_action = info['naught_action']
+            train_logs_file = Path(os.path.join(self.log_dir, "train_logs.json"))
+            if train_logs_file.is_file():
 
-                info_str = "CROSS: {:1d} | NAUGHT: {:2d} | Reward: {:2.0f}".format(
-                    action, naught_action, reward)
+                with train_logs_file.open() as f:
+                    train_logs = json.load(f)
 
-                if done:
-                    info_str = "{} | Outcome: {} | First Player: {}".format(
-                        info_str, info['outcome'], info['player_one'])
+                    if 'elapsed_time_h' in train_logs:
+                        elapsed_time = train_logs['elapsed_time_h']
 
-                    print(info_str)
-                    env.render()
-                    print()
-                else:
-                    print(info_str)
+                    if 'end_episode' in train_logs:
+                        train_episode = train_logs['end_episode']
 
-        all_episode_rewards.append(sum(episode_rewards))
-
-        if verbose and episode == int(num_episodes/2):
-            mean_reward = np.mean(all_episode_rewards)
-            print("Episode: {:6d} | Mean reward: {:5.2f}".format(episode, mean_reward))
-
-        outcome = info['outcome']
-
-        if outcome == TicTacToeEnv.CROSS:
-            win_count += 1
-        elif outcome == TicTacToeEnv.DRAW:
-            draw_count += 1
-        elif outcome == TicTacToeEnv.NAUGHT:
-            loss_count += 1
-        elif outcome == TicTacToeEnv.INVALID:
-            invalid_count += 1
-
-    mean_reward = np.mean(all_episode_rewards)
-    if verbose:
-        print("Episode: {:6d} | Mean reward: {:5.2f}".format(num_episodes, mean_reward))
-
-    return [win_count * 100.0 / num_episodes,
-            draw_count * 100.0 / num_episodes,
-            loss_count * 100.0 / num_episodes,
-            invalid_count * 100.0 / num_episodes,
-            float(mean_reward)]
-
-
-def battle_results(agent: Agent, env_agent: Agent, player_one_char, num_episodes=1000, verbose=False):
-
-    if player_one_char == 'X':
-        row = [num_episodes, agent.name, env_agent.name]
-    elif player_one_char == 'O':
-        row = [num_episodes, env_agent.name, agent.name]
-
-    results = battle(agent, env_agent, player_one_char, num_episodes, verbose=verbose)
-
-    row.extend(results)
-
-    if verbose:
-        print(row)
-
-    return row
-
-
-def evaluate(agent: Agent, env_agent: Agent, num_episodes=1000, verbose=False):
-
-    rows = []
-
-    # Agent playing as First Player
-    if verbose:
-        print("\nEvaluating agent as First Player in {} episodes against {}".format(num_episodes, env_agent.name))
-    rows.append(battle_results(agent, env_agent, 'X', num_episodes, verbose))
-
-    # Agent playing as Second Player
-    if verbose:
-        print("\nEvaluating agent as Second Player in {} episodes against {}".format(num_episodes, env_agent.name))
-    rows.append(battle_results(agent, env_agent, 'O', num_episodes, verbose))
-
-    mean_row = [rows[0][0] + rows[1][0], "Mixed", "Mixed"]
-
-    mean_results = []
-
-    for i in range(3, 8):
-        mean_results.append((rows[0][i] + rows[1][i]) / 2)
-
-    mean_row.extend(mean_results)
-
-    rows.append(mean_row)
-
-    for i in range(len(rows)):
-        rows[i] = [x if type(x) is not float else format(x, '.2f') for x in rows[i]]
-
-    return rows
-
-
-def test_agent(agent: Agent, log_dir, num_episodes, out_file="test_outcomes.csv", train_episode=None, verbose=False):
-
-    rows = []
-
-    env_agent = RandomAgent()
-
-    rows.extend(evaluate(agent, env_agent, num_episodes, verbose))
-
-    env_agent = MinMaxAgent()
-
-    rows.extend(evaluate(agent, env_agent, num_episodes, verbose))
-
-    elapsed_time = None
-    end_episode = None
-
-    train_logs_file = Path(os.path.join(log_dir, "train_logs.json"))
-    if train_logs_file.is_file():
-
-        with train_logs_file.open() as f:
-            train_logs = json.load(f)
-
-            if 'elapsed_time_h' in train_logs:
-                elapsed_time = train_logs['elapsed_time_h']
-
-            if 'end_episode' in train_logs:
-                end_episode = train_logs['end_episode']
-
-    with open(os.path.join(log_dir, "params.json"), "r") as f:
-        train_params = json.load(f, object_pairs_hook=OrderedDict)
+        if not self.train_params:
+            with open(os.path.join(self.log_dir, 'params.json'), 'r') as f:
+                self.train_params = json.load(f, object_pairs_hook=OrderedDict)
 
         if elapsed_time:
-            train_params['elapsed_time'] = elapsed_time
+            self.train_params['elapsed_time'] = elapsed_time
 
-        mode = "w"
-        if end_episode:
-            train_params['train_episode'] = end_episode
-        elif train_episode:
-            mode = "a"
-            train_params['train_episode'] = train_episode
+        if train_episode:
+            self.train_params['train_episode'] = train_episode
 
-        # Write results
-        with open(os.path.join(log_dir, out_file), mode) as f:
+        # Calculate Score
+        # Average of wins versus random and draws vs minmax
+        score = self.res_random_first[-1][0] + self.res_random_second[-1][0] + \
+            self.res_minmax_first[-1][1] + self.res_minmax_second[-1][1]
+        score /= 4
+
+        # Append results
+        rows = []
+        rows.append([self.num_episodes, self.test_agent.name, self.random_agent.name] + self.res_random_first[-1])
+        rows.append([self.num_episodes, self.random_agent.name, self.test_agent.name] + self.res_random_second[-1])
+        rows.append([self.num_episodes, self.test_agent.name, self.minmax_agent.name] + self.res_minmax_first[-1])
+        rows.append([self.num_episodes, self.minmax_agent.name, self.test_agent.name] + self.res_minmax_second[-1])
+
+        with open(os.path.join(self.log_dir, self.out_file), 'a') as f:
             writer = csv.writer(f)
 
-            header = TEST_HEADER + list(train_params.keys())
+            header = TEST_HEADER + ['Score'] + list(self.train_params.keys())
 
             writer.writerow(header)
 
             for row in rows:
-                row.extend(train_params.values())
+                new_row = row + [score]
+                new_row = [x if type(x) is not float else format(x, '.2f') for x in new_row]
+                new_row.extend(self.train_params.values())
+                writer.writerow(new_row)
 
-                writer.writerow(row)
+            writer.writerow([])
 
-            if train_episode:
-                writer.writerow([])
+    def evaluate(self, env_agent, player_one_char):
+
+        win_count = 0
+        loss_count = 0
+        draw_count = 0
+        invalid_count = 0
+
+        # This function will only work for a single Environment
+        env = get_env(self.test_agent.obs_format, env_agent, player_one_char, self.test_agent.rewards)
+
+        if isinstance(env_agent, RLAgent):
+            # print("env:", env.env)
+            # print("env id:", hex(id(env.env)))
+            # print("env.self_play = True")
+            env.env.self_play = True
+
+        all_episode_rewards = []
+        for episode in range(1, self.num_episodes + 1):
+            episode_rewards = []
+            done = False
+            obs = env.reset()
+
+            if self.verbose:
+                print("\n\nGame number {}".format(episode))
+
+            while not done:
+
+                if self.verbose:
+                    env.render()
+
+                action = self.test_agent.play(obs)
+
+                obs, reward, done, info = env.step(action)
+
+                episode_rewards.append(reward)
+
+                # if done and info['outcome'] == TicTacToeEnv.INVALID:
+                if self.verbose:
+
+                    naught_action = -1
+                    if 'naught_action' in info:
+                        naught_action = info['naught_action']
+
+                    info_str = "CROSS: {:1d} | NAUGHT: {:2d} | Reward: {:2.0f}".format(
+                        action, naught_action, reward)
+
+                    if done:
+                        info_str = "{} | Outcome: {} | First Player: {}".format(
+                            info_str, info['outcome'], info['player_one'])
+
+                        print(info_str)
+                        env.render()
+                        print()
+                    else:
+                        print(info_str)
+
+            all_episode_rewards.append(sum(episode_rewards))
+
+            if self.verbose and episode == int(self.num_episodes/2):
+                mean_reward = np.mean(all_episode_rewards)
+                print("Episode: {:6d} | Mean reward: {:5.2f}".format(episode, mean_reward))
+
+            outcome = info['outcome']
+
+            if outcome == TicTacToeEnv.CROSS:
+                win_count += 1
+            elif outcome == TicTacToeEnv.DRAW:
+                draw_count += 1
+            elif outcome == TicTacToeEnv.NAUGHT:
+                loss_count += 1
+            elif outcome == TicTacToeEnv.INVALID:
+                invalid_count += 1
+
+        mean_reward = np.mean(all_episode_rewards)
+        if self.verbose:
+            print("Episode: {:6d} | Mean reward: {:5.2f}".format(self.num_episodes, mean_reward))
+
+        return [win_count * 100.0 / self.num_episodes,
+                draw_count * 100.0 / self.num_episodes,
+                loss_count * 100.0 / self.num_episodes,
+                invalid_count * 100.0 / self.num_episodes,
+                float(mean_reward)]
