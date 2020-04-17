@@ -8,7 +8,7 @@ from utils.utils import get_alg
 
 class RLAgent(Agent):
 
-    def __init__(self, log_dir, model=None, deterministic=True):
+    def __init__(self, log_dir, model=None, deterministic=True, model_suffix=""):
 
         self.log_dir = log_dir
         self.deterministic = deterministic
@@ -33,7 +33,7 @@ class RLAgent(Agent):
             if model:
                 self.model = model
             else:
-                self.model = self.alg.load(self.log_dir + "/" + self.name)
+                self.model = self.alg.load(self.log_dir + "/" + self.name + model_suffix)
 
     def play(self, obs):
 

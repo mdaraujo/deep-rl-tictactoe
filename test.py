@@ -27,6 +27,7 @@ def main():
                         help="run for all subdirs of 'logdir'")
     parser.add_argument('-e', '--episodes', type=int, default=5000)
     parser.add_argument("-v", "--verbose", action="store_true")
+    parser.add_argument('-s', '--model_suffix', type=str, default="")
     args = parser.parse_args()
 
     log_dir = args.logdir
@@ -43,11 +44,13 @@ def main():
 
         print("\nTesting model in dir:", sub_dir)
 
-        agent = RLAgent(sub_dir)
+        agent = RLAgent(sub_dir, model_suffix=args.model_suffix)
 
-        print("Agent name:", agent.name)
+        model_name = agent.name + args.model_suffix
 
-        out_file = "test_{}.csv".format(args.episodes)
+        print("Model name:", model_name)
+
+        out_file = "test_{}.csv".format(model_name)
 
         test_framework = AgentTestFramework(agent, args.episodes, sub_dir, out_file=out_file, verbose=args.verbose)
         test_framework.test()
