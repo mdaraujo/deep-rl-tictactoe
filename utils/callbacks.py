@@ -88,13 +88,14 @@ class PlotTestSaveCallback(object):
         self.model.save(self.log_dir + "/" + self.alg_name)
 
         # Save train logs
-        elapsed_time = time.time() - self.start_time
-        elapsed_time_h = str(datetime.timedelta(seconds=elapsed_time))
+        elapsed_time_seconds = time.time() - self.start_time
+        elapsed_time_h = datetime.timedelta(seconds=elapsed_time_seconds)
+        elapsed_time_h = str(datetime.timedelta(days=elapsed_time_h.days, seconds=elapsed_time_h.seconds))
 
         train_logs = {"end_episode": self.current_episode,
                       "end_mean_reward": self.mean_rewards[-1],
                       "best_mean_reward": self.best_mean_reward,
-                      "elapsed_time": elapsed_time,
+                      "elapsed_time": elapsed_time_seconds,
                       "elapsed_time_h": elapsed_time_h,
                       "save_logs": self.save_logs}
 
@@ -161,7 +162,7 @@ class PlotTestSaveCallback(object):
 
             # Plot Mean Reward
             rewards = self.results['r']
-            mean_reward = np.mean(rewards[:self.eval_freq])
+            mean_reward = float(np.mean(rewards[:self.eval_freq]))
 
             self.x_values.append(self.current_episode)
             self.mean_rewards.append(mean_reward)
@@ -307,7 +308,9 @@ class PlotTestSaveCallback(object):
         if self.current_episode >= self.train_episodes:
             return False
 
-        elapsed_time_h = str(datetime.timedelta(seconds=time.time() - self.start_time))
+        elapsed_time_seconds = time.time() - self.start_time
+        elapsed_time_h = datetime.timedelta(seconds=elapsed_time_seconds)
+        elapsed_time_h = str(datetime.timedelta(days=elapsed_time_h.days, seconds=elapsed_time_h.seconds))
 
         self.test_framework.test(train_episode=self.current_episode, elapsed_time=elapsed_time_h)
 

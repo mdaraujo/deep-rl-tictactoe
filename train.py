@@ -60,7 +60,7 @@ def train(alg, obs_format, env_agent: Agent, self_play: bool, train_episodes=100
               "r_lose": rewards[3],
               "r_invalid": rewards[4],
               "player_one_char": player_one_char,
-              "datetime": now.isoformat()}
+              "datetime": now.replace(microsecond=0).isoformat()}
 
     net_arch_str = '-'.join([str(elem) for elem in net_arch])
 
