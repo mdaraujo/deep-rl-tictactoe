@@ -72,11 +72,7 @@ class AgentTestFramework:
             with open(os.path.join(self.log_dir, 'params.json'), 'r') as f:
                 self.train_params = json.load(f, object_pairs_hook=OrderedDict)
 
-        if elapsed_time:
-            self.train_params['elapsed_time'] = elapsed_time
-
-        if train_episode:
-            self.train_params['train_episode'] = train_episode
+        self.train_params['elapsed_time'] = elapsed_time
 
         # Calculate Score
         # Average of wins versus random and draws vs minmax
@@ -94,12 +90,12 @@ class AgentTestFramework:
         with open(os.path.join(self.log_dir, self.out_file), 'a') as f:
             writer = csv.writer(f)
 
-            header = TEST_HEADER + ['Score'] + list(self.train_params.keys())
+            header = TEST_HEADER + ['Score', 'train_episode'] + list(self.train_params.keys())
 
             writer.writerow(header)
 
             for row in rows:
-                new_row = row + [score]
+                new_row = row + [score, train_episode]
                 new_row = [x if type(x) is not float else format(x, '.2f') for x in new_row]
                 new_row.extend(self.train_params.values())
                 writer.writerow(new_row)
