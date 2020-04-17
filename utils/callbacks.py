@@ -51,6 +51,7 @@ class PlotTestSaveCallback(object):
         self.env = env
         self.agent = None
         self.test_framework = None
+        self.best_score = 0
 
         with open(self.log_dir + "/params.json", "r") as f:
             params = json.load(f)
@@ -92,17 +93,14 @@ class PlotTestSaveCallback(object):
         elapsed_time_seconds, elapsed_time_h = get_elapsed_time(time.time(), self.start_time)
 
         train_logs = {"end_episode": self.current_episode,
-                      "end_mean_reward": self.mean_rewards[-1],
-                      "best_mean_reward": self.best_mean_reward,
-                      "elapsed_time": elapsed_time_seconds,
+                      "end_score": self.test_framework.current_score,
+                      "best_score": self.best_score,
+                      "elapsed_time": float(elapsed_time_seconds),
                       "elapsed_time_h": elapsed_time_h,
                       "save_logs": self.save_logs}
 
         with open(self.log_dir + "/train_logs.json", "w") as f:
             json.dump(OrderedDict(train_logs), f, indent=4)
-
-        # Final test
-        self.test_framework.test(train_episode=self.current_episode, train_time=elapsed_time_h)
 
         self.pbar.n = self.train_episodes
         self.pbar.update(0)
@@ -159,158 +157,45 @@ class PlotTestSaveCallback(object):
 
             self.current_episode += self.eval_freq
 
-            # Plot Mean Reward
-            rewards = self.results['r']
-            mean_reward = float(np.mean(rewards[:self.eval_freq]))
+            self.process_train_results()
 
-            self.x_values.append(self.current_episode)
-            self.mean_rewards.append(mean_reward)
+            self.plot_train_rewards()
 
-            if self.plot_mr is None:
-                fig1, ax1 = plt.subplots(figsize=self.figsize)
-                ax1.set_title(self.plot_mr_title)
-                ax1.set_xlabel('Number of Episodes')
-                ax1.set_ylabel('Mean {} Episode Reward'.format(self.eval_freq))
+            self.plot_train_outcomes()
 
-                line, = ax1.plot(self.x_values, self.mean_rewards)
-                self.plot_mr = (line, ax1, fig1)
-            else:
-                self.plot_mr[0].set_data(self.x_values, self.mean_rewards)
-                self.plot_mr[1].relim()
-                self.plot_mr[1].autoscale_view(True, True, True)
-                self.plot_mr[2].tight_layout()
-                self.plot_mr[2].canvas.draw()
-
-            self.plot_mr[1].set_title("{} | Best: {:5.2f}".format(self.plot_mr_title, self.best_mean_reward))
-            self.plot_mr[2].savefig(self.plot_mr_fig)
-
-            # print(self.x_values)
-            # print(self.mean_rewards)
-
-            # Plot Outcomes Percentage
-            outcomes = self.results['outcome']
-            player_one = self.results['player_one']
-
-            # print(outcomes.tail())
-            # print(player_one.tail())
-            # print()
-
-            win_count = 0
-            draw_count = 0
-            loss_count = 0
-            invalid_count = 0
-            cross_first_player_count = 0
-
-            for i in range(self.eval_freq):
-
-                if outcomes[i] == TicTacToeEnv.CROSS:
-                    win_count += 1
-                elif outcomes[i] == TicTacToeEnv.DRAW:
-                    draw_count += 1
-                elif outcomes[i] == TicTacToeEnv.NAUGHT:
-                    loss_count += 1
-                elif outcomes[i] == TicTacToeEnv.INVALID:
-                    invalid_count += 1
-
-                if player_one[i] == 'X':
-                    cross_first_player_count += 1
-
-            self.wins_perc.append(win_count * 100.0 / self.eval_freq)
-            self.draws_perc.append(draw_count * 100.0 / self.eval_freq)
-            self.losses_perc.append(loss_count * 100.0 / self.eval_freq)
-            self.invalids_perc.append(invalid_count * 100.0 / self.eval_freq)
-            self.cross_first_perc.append(cross_first_player_count * 100.0 / self.eval_freq)
-
-            if self.plot_outcomes is None:
-                fig2, ax2 = plt.subplots(figsize=self.figsize)
-                ax2.set_title(self.plot_outcomes_title)
-                ax2.set_xlabel('Number of Episodes')
-                ax2.set_ylabel('Episode Outcomes %')
-
-                line1, = ax2.plot(self.x_values, self.wins_perc, 'g-', label="Wins")
-                line2, = ax2.plot(self.x_values, self.draws_perc, 'b-', label="Draws")
-                line3, = ax2.plot(self.x_values, self.losses_perc, 'r-', label="Losses")
-                line4, = ax2.plot(self.x_values, self.invalids_perc, 'y-', label="Invalids")
-                self.plot_outcomes = (line1, line2, line3, line4, ax2, fig2)
-            else:
-                self.plot_outcomes[0].set_data(self.x_values, self.wins_perc)
-                self.plot_outcomes[1].set_data(self.x_values, self.draws_perc)
-                self.plot_outcomes[2].set_data(self.x_values, self.losses_perc)
-                self.plot_outcomes[3].set_data(self.x_values, self.invalids_perc)
-                self.plot_outcomes[4].relim()
-                self.plot_outcomes[4].autoscale_view(True, True, True)
-                self.plot_outcomes[4].legend(loc='best', shadow=True, fancybox=True, framealpha=0.7)
-                self.plot_outcomes[5].tight_layout()
-                self.plot_outcomes[5].canvas.draw()
-
-            self.plot_outcomes[5].savefig(self.log_dir + "/train_outcomes_" + self.alg_name + ".png")
-
-            # Write results to CSV file
-            rows = zip(self.x_values, self.wins_perc, self.draws_perc, self.losses_perc,
-                       self.invalids_perc, self.mean_rewards, self.cross_first_perc)
-
-            with open(self.log_dir + "/train_results_" + self.alg_name + ".csv", "w") as f:
-                writer = csv.writer(f)
-                writer.writerow(("Episode", "Wins", "Draws", "Losses", "Invalids", "Mean Rewards", "X_First"))
-
-                for row in rows:
-                    new_row = [x if type(x) is not float else format(x, '.1f') for x in row]
-                    writer.writerow(new_row)
-
-                writer.writerow(['Min',
-                                 '{:.1f}'.format(np.min(self.wins_perc)),
-                                 '{:.1f}'.format(np.min(self.draws_perc)),
-                                 '{:.1f}'.format(np.min(self.losses_perc)),
-                                 '{:.1f}'.format(np.min(self.invalids_perc)),
-                                 '{:.1f}'.format(np.min(self.mean_rewards)),
-                                 '{:.1f}'.format(np.min(self.cross_first_perc))])
-
-                writer.writerow(['Max',
-                                 '{:.1f}'.format(np.max(self.wins_perc)),
-                                 '{:.1f}'.format(np.max(self.draws_perc)),
-                                 '{:.1f}'.format(np.max(self.losses_perc)),
-                                 '{:.1f}'.format(np.max(self.invalids_perc)),
-                                 '{:.1f}'.format(np.max(self.mean_rewards)),
-                                 '{:.1f}'.format(np.max(self.cross_first_perc))])
-
-                writer.writerow(['Mean',
-                                 '{:.1f}'.format(np.mean(self.wins_perc)),
-                                 '{:.1f}'.format(np.mean(self.draws_perc)),
-                                 '{:.1f}'.format(np.mean(self.losses_perc)),
-                                 '{:.1f}'.format(np.mean(self.invalids_perc)),
-                                 '{:.1f}'.format(np.mean(self.mean_rewards)),
-                                 '{:.1f}'.format(np.mean(self.cross_first_perc))])
-
-            # New best model, save the agent
-            if mean_reward >= self.best_mean_reward:
-                self.best_mean_reward = mean_reward
-
-                self.save_logs.append({"episode": self.current_episode,
-                                       "best_mean_reward": self.best_mean_reward})
-
-                # print("Saving new best model. Best Mean Reward: {:5.2f} | Episode: {:6d}".format(
-                #     mean_reward, self.current_episode)
-
-                self.model.save(self.log_dir + "/" + self.alg_name + "_best")
+            self.write_train_results()
 
             # print("before drop:", self.results)
-            self.results.drop(range(self.eval_freq),  inplace=True)
+            self.results.drop(range(self.eval_freq), inplace=True)
             self.results.reset_index(drop=True, inplace=True)
             # print("after drop:", self.results)
 
+        # Update test agent
         if not self.agent:
             self.agent = RLAgent(self.log_dir, model=self.model)
             self.test_framework = AgentTestFramework(self.agent, 1000, self.log_dir, verbose=False)
         else:
             self.agent.model = self.model
 
-        if self.current_episode >= self.train_episodes:
-            return False
-
+        # Test
         _, elapsed_time_h = get_elapsed_time(time.time(), self.start_time)
 
         self.test_framework.test(train_episode=self.current_episode, train_time=elapsed_time_h)
 
+        # Save the best model
+        if self.test_framework.current_score >= self.best_score:
+            self.best_score = self.test_framework.current_score
+
+            self.save_logs.append({"episode": self.current_episode,
+                                   "best_score": self.best_score})
+
+            self.model.save(self.log_dir + "/" + self.alg_name + "_best")
+
+        # Check if train should finish
+        if self.current_episode >= self.train_episodes:
+            return False
+
+        # Update env agent
         if self.self_play:
 
             # self.model.save(self.log_dir + "/" + self.alg_name)
@@ -354,3 +239,130 @@ class PlotTestSaveCallback(object):
         self.pbar.update(0)
 
         return True
+
+    def process_train_results(self):
+
+        rewards = self.results['r']
+        mean_reward = float(np.mean(rewards[:self.eval_freq]))
+
+        self.x_values.append(self.current_episode)
+        self.mean_rewards.append(mean_reward)
+
+        # print(self.x_values)
+        # print(self.mean_rewards)
+
+        outcomes = self.results['outcome']
+        player_one = self.results['player_one']
+
+        # print(outcomes.tail())
+        # print(player_one.tail())
+        # print()
+
+        win_count = 0
+        draw_count = 0
+        loss_count = 0
+        invalid_count = 0
+        cross_first_player_count = 0
+
+        for i in range(self.eval_freq):
+
+            if outcomes[i] == TicTacToeEnv.CROSS:
+                win_count += 1
+            elif outcomes[i] == TicTacToeEnv.DRAW:
+                draw_count += 1
+            elif outcomes[i] == TicTacToeEnv.NAUGHT:
+                loss_count += 1
+            elif outcomes[i] == TicTacToeEnv.INVALID:
+                invalid_count += 1
+
+            if player_one[i] == 'X':
+                cross_first_player_count += 1
+
+        self.wins_perc.append(win_count * 100.0 / self.eval_freq)
+        self.draws_perc.append(draw_count * 100.0 / self.eval_freq)
+        self.losses_perc.append(loss_count * 100.0 / self.eval_freq)
+        self.invalids_perc.append(invalid_count * 100.0 / self.eval_freq)
+        self.cross_first_perc.append(cross_first_player_count * 100.0 / self.eval_freq)
+
+    def plot_train_rewards(self):
+
+        if self.plot_mr is None:
+            fig1, ax1 = plt.subplots(figsize=self.figsize)
+            ax1.set_title(self.plot_mr_title)
+            ax1.set_xlabel('Number of Episodes')
+            ax1.set_ylabel('Mean {} Episode Reward'.format(self.eval_freq))
+
+            line, = ax1.plot(self.x_values, self.mean_rewards)
+            self.plot_mr = (line, ax1, fig1)
+        else:
+            self.plot_mr[0].set_data(self.x_values, self.mean_rewards)
+            self.plot_mr[1].relim()
+            self.plot_mr[1].autoscale_view(True, True, True)
+            self.plot_mr[2].tight_layout()
+            self.plot_mr[2].canvas.draw()
+
+        self.plot_mr[1].set_title("{} | Best: {:5.2f}".format(self.plot_mr_title, self.best_mean_reward))
+        self.plot_mr[2].savefig(self.plot_mr_fig)
+
+    def plot_train_outcomes(self):
+
+        if self.plot_outcomes is None:
+            fig2, ax2 = plt.subplots(figsize=self.figsize)
+            ax2.set_title(self.plot_outcomes_title)
+            ax2.set_xlabel('Number of Episodes')
+            ax2.set_ylabel('Episode Outcomes %')
+
+            line1, = ax2.plot(self.x_values, self.wins_perc, 'g-', label="Wins")
+            line2, = ax2.plot(self.x_values, self.draws_perc, 'b-', label="Draws")
+            line3, = ax2.plot(self.x_values, self.losses_perc, 'r-', label="Losses")
+            line4, = ax2.plot(self.x_values, self.invalids_perc, 'y-', label="Invalids")
+            self.plot_outcomes = (line1, line2, line3, line4, ax2, fig2)
+        else:
+            self.plot_outcomes[0].set_data(self.x_values, self.wins_perc)
+            self.plot_outcomes[1].set_data(self.x_values, self.draws_perc)
+            self.plot_outcomes[2].set_data(self.x_values, self.losses_perc)
+            self.plot_outcomes[3].set_data(self.x_values, self.invalids_perc)
+            self.plot_outcomes[4].relim()
+            self.plot_outcomes[4].autoscale_view(True, True, True)
+            self.plot_outcomes[4].legend(loc='best', shadow=True, fancybox=True, framealpha=0.7)
+            self.plot_outcomes[5].tight_layout()
+            self.plot_outcomes[5].canvas.draw()
+
+        self.plot_outcomes[5].savefig(self.log_dir + "/train_outcomes_" + self.alg_name + ".png")
+
+    def write_train_results(self):
+
+        rows = zip(self.x_values, self.wins_perc, self.draws_perc, self.losses_perc,
+                   self.invalids_perc, self.mean_rewards, self.cross_first_perc)
+
+        with open(self.log_dir + "/train_results_" + self.alg_name + ".csv", "w") as f:
+            writer = csv.writer(f)
+            writer.writerow(("Episode", "Wins", "Draws", "Losses", "Invalids", "Mean Rewards", "X_First"))
+
+            for row in rows:
+                new_row = [x if type(x) is not float else format(x, '.1f') for x in row]
+                writer.writerow(new_row)
+
+            writer.writerow(['Min',
+                             '{:.1f}'.format(np.min(self.wins_perc)),
+                             '{:.1f}'.format(np.min(self.draws_perc)),
+                             '{:.1f}'.format(np.min(self.losses_perc)),
+                             '{:.1f}'.format(np.min(self.invalids_perc)),
+                             '{:.1f}'.format(np.min(self.mean_rewards)),
+                             '{:.1f}'.format(np.min(self.cross_first_perc))])
+
+            writer.writerow(['Max',
+                             '{:.1f}'.format(np.max(self.wins_perc)),
+                             '{:.1f}'.format(np.max(self.draws_perc)),
+                             '{:.1f}'.format(np.max(self.losses_perc)),
+                             '{:.1f}'.format(np.max(self.invalids_perc)),
+                             '{:.1f}'.format(np.max(self.mean_rewards)),
+                             '{:.1f}'.format(np.max(self.cross_first_perc))])
+
+            writer.writerow(['Mean',
+                             '{:.1f}'.format(np.mean(self.wins_perc)),
+                             '{:.1f}'.format(np.mean(self.draws_perc)),
+                             '{:.1f}'.format(np.mean(self.losses_perc)),
+                             '{:.1f}'.format(np.mean(self.invalids_perc)),
+                             '{:.1f}'.format(np.mean(self.mean_rewards)),
+                             '{:.1f}'.format(np.mean(self.cross_first_perc))])

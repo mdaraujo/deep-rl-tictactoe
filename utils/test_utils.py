@@ -32,6 +32,7 @@ class AgentTestFramework:
         self.res_minmax_first = []
         self.res_minmax_second = []
         self.train_params = None
+        self.current_score = 0
 
     def test(self, train_episode=None, train_time=None):
 
@@ -79,9 +80,10 @@ class AgentTestFramework:
 
         # Calculate Score
         # Average of wins versus random and draws vs minmax
-        score = self.res_random_first[-1][0] + self.res_random_second[-1][0] + \
+        self.current_score = self.res_random_first[-1][0] + self.res_random_second[-1][0] + \
             self.res_minmax_first[-1][1] + self.res_minmax_second[-1][1]
-        score /= 4
+
+        self.current_score /= 4
 
         # Append results
         rows = []
@@ -102,7 +104,7 @@ class AgentTestFramework:
             writer.writerow(header)
 
             for row in rows:
-                new_row = row + [score, train_episode]
+                new_row = row + [self.current_score, train_episode]
                 new_row = [x if type(x) is not float else format(x, '.2f') for x in new_row]
                 new_row.extend(self.train_params.values())
                 writer.writerow(new_row)
