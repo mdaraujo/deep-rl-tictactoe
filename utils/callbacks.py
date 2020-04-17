@@ -87,15 +87,16 @@ class PlotTestSaveCallback(object):
     def __exit__(self, exc_type, exc_val, exc_tb):  # close the callback
 
         # Save model at the end
-        self.model.save(self.log_dir + "/" + self.alg_name)
+        if self.model:
+            self.model.save(self.log_dir + "/" + self.alg_name)
 
         # Save train logs
         elapsed_time_seconds, elapsed_time_h = get_elapsed_time(time.time(), self.start_time)
 
         train_logs = {"end_episode": self.current_episode,
-                      "end_score": self.test_framework.current_score,
-                      "best_score": self.best_score,
-                      "elapsed_time": float(elapsed_time_seconds),
+                      "end_score": round(self.test_framework.current_score, 2),
+                      "best_score": round(self.best_score, 2),
+                      "elapsed_time": int(elapsed_time_seconds),
                       "elapsed_time_h": elapsed_time_h,
                       "save_logs": self.save_logs}
 
@@ -187,7 +188,7 @@ class PlotTestSaveCallback(object):
             self.best_score = self.test_framework.current_score
 
             self.save_logs.append({"episode": self.current_episode,
-                                   "best_score": self.best_score})
+                                   "best_score": round(self.best_score, 2)})
 
             self.model.save(self.log_dir + "/" + self.alg_name + "_best")
 
