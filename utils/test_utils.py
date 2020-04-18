@@ -16,7 +16,7 @@ from utils.utils import get_env, get_elapsed_time, FIG_SIZE
 from utils.rl_agent import RLAgent
 
 TEST_HEADER = ["Episodes", "First Player", "Second Player", "Wins", "Draws",
-               "Losses", "Invalids", "Mean Reward"]
+               "Losses", "Invalids", "Mean Reward", "test_time", "Score"]
 
 
 class AgentTestFramework:
@@ -33,7 +33,6 @@ class AgentTestFramework:
         self.res_random_second = []
         self.res_minmax_first = []
         self.res_minmax_second = []
-        self.train_params = None
         self.current_score = 0
         self.best_score = 0
         self.current_idx = 0
@@ -42,53 +41,22 @@ class AgentTestFramework:
         self.plot = None
         self.x_values = []
         self.scores = []
+        self.other_params = {}
+
+        with open(os.path.join(self.log_dir, 'params.json'), 'r') as f:
+            self.train_params = json.load(f, object_pairs_hook=OrderedDict)
 
     def test(self, train_episode=None, train_time=None):
 
         start_time = time.time()
 
-        if self.verbose:
-            print("\nEvaluating going first vs random in {} episodes.".format(self.num_episodes))
-
         self.res_random_first.append(self.evaluate(self.random_agent, 'X'))
-
-        if self.verbose:
-            print("\nEvaluating going second vs random in {} episodes.".format(self.num_episodes))
-
         self.res_random_second.append(self.evaluate(self.random_agent, 'O'))
-
-        if self.verbose:
-            print("\nEvaluating going first vs minmax in {} episodes.".format(self.num_episodes))
-
         self.res_minmax_first.append(self.evaluate(self.minmax_agent, 'X'))
-
-        if self.verbose:
-            print("\nEvaluating going second vs minmax in {} episodes.".format(self.num_episodes))
-
         self.res_minmax_second.append(self.evaluate(self.minmax_agent, 'O'))
 
-        if not train_episode or not train_time:
-
-            train_logs_file = Path(os.path.join(self.log_dir, "train_logs.json"))
-            if train_logs_file.is_file():
-
-                with train_logs_file.open() as f:
-                    train_logs = json.load(f)
-
-                    if 'elapsed_time_h' in train_logs:
-                        train_time = train_logs['elapsed_time_h']
-
-                    if 'end_episode' in train_logs:
-                        train_episode = train_logs['end_episode']
-
-        if not self.train_params:
-            with open(os.path.join(self.log_dir, 'params.json'), 'r') as f:
-                self.train_params = json.load(f, object_pairs_hook=OrderedDict)
-
-        self.train_params['train_time'] = train_time
-
         # Calculate Score
-        # Average of wins versus random and draws vs minmax
+        # Average of wins vs random and draws vs minmax
         self.current_score = self.res_random_first[-1][0] + self.res_random_second[-1][0] + \
             self.res_minmax_first[-1][1] + self.res_minmax_second[-1][1]
 
@@ -105,33 +73,42 @@ class AgentTestFramework:
         if len(self.res_random_first) > 1:
             self.plot_test_outcomes()
 
-        # Append results
+        if train_episode:
+            self.other_params['train_episode'] = train_episode
+
+        if train_time:
+            self.other_params['train_time'] = train_time
+
+        _, test_time_h = get_elapsed_time(time.time(), start_time)
+
+        self.other_params['total_test_time'] = test_time_h
+
+        self.write_test_outcomes()
+
+        self.current_idx += 1
+
+    def write_test_outcomes(self):
+
         rows = []
         rows.append([self.num_episodes, self.test_agent.name, self.random_agent.name] + self.res_random_first[-1])
         rows.append([self.num_episodes, self.random_agent.name, self.test_agent.name] + self.res_random_second[-1])
         rows.append([self.num_episodes, self.test_agent.name, self.minmax_agent.name] + self.res_minmax_first[-1])
         rows.append([self.num_episodes, self.minmax_agent.name, self.test_agent.name] + self.res_minmax_second[-1])
 
-        _, test_time_h = get_elapsed_time(time.time(), start_time)
-
-        self.train_params['test_time'] = test_time_h
-
         with open(os.path.join(self.log_dir, self.out_file), 'a') as f:
             writer = csv.writer(f)
 
-            header = TEST_HEADER + ['Score', 'train_episode'] + list(self.train_params.keys())
+            header = TEST_HEADER + list(self.other_params.keys()) + list(self.train_params.keys())
 
             writer.writerow(header)
 
             for row in rows:
-                new_row = row + [self.current_score, train_episode]
+                new_row = row + [self.current_score] + list(self.other_params.values())
                 new_row = [x if type(x) is not float else format(x, '.2f') for x in new_row]
                 new_row.extend(self.train_params.values())
                 writer.writerow(new_row)
 
             writer.writerow([])
-
-        self.current_idx += 1
 
     def plot_test_outcomes(self):
 
@@ -146,8 +123,8 @@ class AgentTestFramework:
             ax1.set_ylabel('Outcomes %')
 
             line1, = ax1.plot(self.x_values, wins_random_first, 'b')
-            line2, = ax1.plot(self.x_values, wins_random_second, 'c')
-            line3, = ax1.plot(self.x_values, draws_minmax_first, 'darkgreen')
+            line2, = ax1.plot(self.x_values, wins_random_second, 'cyan')
+            line3, = ax1.plot(self.x_values, draws_minmax_first, 'green')
             line4, = ax1.plot(self.x_values, draws_minmax_second, 'mediumseagreen')
             line5, = ax1.plot(self.x_values, self.scores, 'orangered')
 
@@ -178,6 +155,12 @@ class AgentTestFramework:
         self.plot[1].savefig(self.log_dir + "/test_outcomes.png")
 
     def evaluate(self, env_agent, player_one_char):
+
+        start_time = time.time()
+
+        if self.verbose:
+            print("\n\n --- Evaluating vs {}. First Player: {}. Episodes: {}.".format(
+                env_agent.name, player_one_char, self.num_episodes))
 
         win_count = 0
         loss_count = 0
@@ -254,8 +237,11 @@ class AgentTestFramework:
         if self.verbose:
             print("Episode: {:6d} | Mean reward: {:5.2f}".format(self.num_episodes, mean_reward))
 
+        _, test_time_h = get_elapsed_time(time.time(), start_time)
+
         return [win_count * 100.0 / self.num_episodes,
                 draw_count * 100.0 / self.num_episodes,
                 loss_count * 100.0 / self.num_episodes,
                 invalid_count * 100.0 / self.num_episodes,
-                float(mean_reward)]
+                float(mean_reward),
+                test_time_h]
