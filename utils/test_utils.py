@@ -3,6 +3,8 @@ import time
 import json
 import csv
 import numpy as np
+import matplotlib.pyplot as plt
+
 from collections import OrderedDict
 from pathlib import Path
 
@@ -10,7 +12,7 @@ from gym_tictactoe.envs.tictactoe_env import TicTacToeEnv
 from gym_tictactoe.agents.random_agent import RandomAgent
 from gym_tictactoe.agents.min_max_agent import MinMaxAgent
 
-from utils.utils import get_env, get_elapsed_time
+from utils.utils import get_env, get_elapsed_time, FIG_SIZE
 from utils.rl_agent import RLAgent
 
 TEST_HEADER = ["Episodes", "First Player", "Second Player", "Wins", "Draws",
@@ -33,6 +35,13 @@ class AgentTestFramework:
         self.res_minmax_second = []
         self.train_params = None
         self.current_score = 0
+        self.best_score = 0
+        self.current_idx = 0
+        self.best_score_idx = 0
+        self.best_train_episode = 0
+        self.plot = None
+        self.x_values = []
+        self.scores = []
 
     def test(self, train_episode=None, train_time=None):
 
@@ -85,6 +94,17 @@ class AgentTestFramework:
 
         self.current_score /= 4
 
+        if self.current_score >= self.best_score:
+            self.best_score = self.current_score
+            self.best_score_idx = self.current_idx
+            self.best_train_episode = train_episode
+
+        self.x_values.append(train_episode)
+        self.scores.append(self.current_score)
+
+        if len(self.res_random_first) > 1:
+            self.plot_test_outcomes()
+
         # Append results
         rows = []
         rows.append([self.num_episodes, self.test_agent.name, self.random_agent.name] + self.res_random_first[-1])
@@ -110,6 +130,52 @@ class AgentTestFramework:
                 writer.writerow(new_row)
 
             writer.writerow([])
+
+        self.current_idx += 1
+
+    def plot_test_outcomes(self):
+
+        wins_random_first = [x[0] for x in self.res_random_first]
+        wins_random_second = [x[0] for x in self.res_random_second]
+        draws_minmax_first = [x[1] for x in self.res_minmax_first]
+        draws_minmax_second = [x[1] for x in self.res_minmax_second]
+
+        if self.plot is None:
+            fig1, ax1 = plt.subplots(figsize=FIG_SIZE)
+            ax1.set_xlabel('Train Episode')
+            ax1.set_ylabel('Outcomes %')
+
+            line1, = ax1.plot(self.x_values, wins_random_first, 'b')
+            line2, = ax1.plot(self.x_values, wins_random_second, 'c')
+            line3, = ax1.plot(self.x_values, draws_minmax_first, 'darkgreen')
+            line4, = ax1.plot(self.x_values, draws_minmax_second, 'mediumseagreen')
+            line5, = ax1.plot(self.x_values, self.scores, 'orangered')
+
+            self.plot = (ax1, fig1, line1, line2, line3, line4, line5)
+
+        self.plot[0].set_title("{} Test Outcomes | Best Score {:5.2f} at Ep {}".format(self.test_agent.name,
+                                                                                       self.best_score,
+                                                                                       self.best_train_episode))
+
+        self.plot[2].set_label("WinsVsRandom1º | {:5.2f}".format(self.res_random_first[self.best_score_idx][0]))
+        self.plot[3].set_label("WinsVsRandom2º | {:5.2f}".format(self.res_random_second[self.best_score_idx][0]))
+        self.plot[4].set_label("DrawsVsMinMax1º| {:5.2f}".format(self.res_minmax_first[self.best_score_idx][1]))
+        self.plot[5].set_label("DrawsVsMinMax2º| {:5.2f}".format(self.res_minmax_second[self.best_score_idx][1]))
+        self.plot[6].set_label("Score (Average)| {:5.2f}".format(self.best_score))
+
+        self.plot[2].set_data(self.x_values, wins_random_first)
+        self.plot[3].set_data(self.x_values, wins_random_second)
+        self.plot[4].set_data(self.x_values, draws_minmax_first)
+        self.plot[5].set_data(self.x_values, draws_minmax_second)
+        self.plot[6].set_data(self.x_values, self.scores)
+
+        self.plot[0].relim()
+        self.plot[0].autoscale_view(True, True, True)
+        self.plot[0].legend(loc='best', shadow=True, fancybox=True, framealpha=0.7)
+        self.plot[1].tight_layout()
+        self.plot[1].canvas.draw()
+
+        self.plot[1].savefig(self.log_dir + "/test_outcomes.png")
 
     def evaluate(self, env_agent, player_one_char):
 

@@ -10,6 +10,7 @@ from stable_baselines.common.vec_env import DummyVecEnv, SubprocVecEnv
 from gym_tictactoe.envs.tictactoe_env import TicTacToeEnv, ObsRawToOneHot, ObsRawTo2D
 from gym_tictactoe.agents.base import Agent, OBS_FORMAT_ONE_HOT, OBS_FORMAT_2D
 
+FIG_SIZE = (12, 5)
 
 def get_alg(alg_name):
 

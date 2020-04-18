@@ -14,7 +14,7 @@ from stable_baselines.results_plotter import load_results, ts2xy
 
 from gym_tictactoe.envs.tictactoe_env import TicTacToeEnv
 
-from utils.utils import get_elapsed_time
+from utils.utils import get_elapsed_time, FIG_SIZE
 from utils.rl_agent import RLAgent
 from utils.test_utils import AgentTestFramework
 
@@ -44,14 +44,12 @@ class PlotTestSaveCallback(object):
         self.losses_perc = []
         self.invalids_perc = []
         self.cross_first_perc = []
-        self.figsize = (12, 5)
         self.results = pd.DataFrame()
         self.model = None
         self.env_agent = None
         self.env = env
         self.agent = None
         self.test_framework = None
-        self.best_score = 0
 
         with open(self.log_dir + "/params.json", "r") as f:
             params = json.load(f)
@@ -95,7 +93,7 @@ class PlotTestSaveCallback(object):
 
         train_logs = {"end_episode": self.current_episode,
                       "end_score": round(self.test_framework.current_score, 2),
-                      "best_score": round(self.best_score, 2),
+                      "best_score": round(self.test_framework.best_score, 2),
                       "elapsed_time": int(elapsed_time_seconds),
                       "elapsed_time_h": elapsed_time_h,
                       "save_logs": self.save_logs}
@@ -160,9 +158,9 @@ class PlotTestSaveCallback(object):
 
             self.process_train_results()
 
-            self.plot_train_rewards()
-
-            self.plot_train_outcomes()
+            if len(self.x_values) > 1:
+                self.plot_train_rewards()
+                self.plot_train_outcomes()
 
             self.write_train_results()
 
@@ -184,11 +182,10 @@ class PlotTestSaveCallback(object):
         self.test_framework.test(train_episode=self.current_episode, train_time=elapsed_time_h)
 
         # Save the best model
-        if self.test_framework.current_score >= self.best_score:
-            self.best_score = self.test_framework.current_score
+        if self.test_framework.best_score == self.test_framework.current_score:
 
             self.save_logs.append({"episode": self.current_episode,
-                                   "best_score": round(self.best_score, 2)})
+                                   "best_score": round(self.test_framework.best_score, 2)})
 
             self.model.save(self.log_dir + "/" + self.alg_name + "_best")
 
@@ -246,6 +243,9 @@ class PlotTestSaveCallback(object):
         rewards = self.results['r']
         mean_reward = float(np.mean(rewards[:self.eval_freq]))
 
+        if mean_reward > self.best_mean_reward:
+            self.best_mean_reward = mean_reward
+
         self.x_values.append(self.current_episode)
         self.mean_rewards.append(mean_reward)
 
@@ -288,7 +288,7 @@ class PlotTestSaveCallback(object):
     def plot_train_rewards(self):
 
         if self.plot_mr is None:
-            fig1, ax1 = plt.subplots(figsize=self.figsize)
+            fig1, ax1 = plt.subplots(figsize=FIG_SIZE)
             ax1.set_title(self.plot_mr_title)
             ax1.set_xlabel('Number of Episodes')
             ax1.set_ylabel('Mean {} Episode Reward'.format(self.eval_freq))
@@ -308,7 +308,7 @@ class PlotTestSaveCallback(object):
     def plot_train_outcomes(self):
 
         if self.plot_outcomes is None:
-            fig2, ax2 = plt.subplots(figsize=self.figsize)
+            fig2, ax2 = plt.subplots(figsize=FIG_SIZE)
             ax2.set_title(self.plot_outcomes_title)
             ax2.set_xlabel('Number of Episodes')
             ax2.set_ylabel('Episode Outcomes %')
