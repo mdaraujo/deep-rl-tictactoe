@@ -1,20 +1,9 @@
 import os
 import argparse
-import warnings
-import logging
 
+from utils.utils import filter_tf_warnings
 from utils.rl_agent import RLAgent
 from utils.test_utils import AgentTestFramework
-
-# Filter tensorflow version warnings
-# https://stackoverflow.com/questions/40426502/is-there-a-way-to-suppress-the-messages-tensorflow-prints/40426709
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
-
-# https://stackoverflow.com/questions/15777951/how-to-suppress-pandas-future-warning
-warnings.simplefilter(action='ignore', category=FutureWarning)
-warnings.simplefilter(action='ignore', category=Warning)
-
-logging.getLogger("tensorflow").setLevel(logging.ERROR)
 
 
 def main():
@@ -39,6 +28,8 @@ def main():
 
     if not args.all:
         all_subdirs = [log_dir]
+
+    filter_tf_warnings()
 
     for sub_dir in all_subdirs:
 

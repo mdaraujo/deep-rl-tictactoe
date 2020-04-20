@@ -4,27 +4,14 @@ import json
 from datetime import datetime
 from collections import OrderedDict
 
-import warnings
-import logging
-
 from gym_tictactoe.envs.tictactoe_env import TicTacToeEnv
 from gym_tictactoe.agents.base import Agent, OBS_FORMAT_ONE_HOT, OBS_FORMAT_2D
 from gym_tictactoe.agents.random_agent import RandomAgent
 from gym_tictactoe.agents.min_max_agent import MinMaxAgent
 
-from utils.utils import get_alg, get_env
+from utils.utils import get_alg, get_env, filter_tf_warnings
 from utils.callbacks import PlotTestSaveCallback
 from utils.cnn_extractor import tic_tac_toe_cnn
-
-# Filter tensorflow version warnings
-# https://stackoverflow.com/questions/40426502/is-there-a-way-to-suppress-the-messages-tensorflow-prints/40426709
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
-
-# https://stackoverflow.com/questions/15777951/how-to-suppress-pandas-future-warning
-warnings.simplefilter(action='ignore', category=FutureWarning)
-warnings.simplefilter(action='ignore', category=Warning)
-
-logging.getLogger("tensorflow").setLevel(logging.ERROR)
 
 TRAIN_PARAMS = ["alg", "env_agent", "train_episodes", "eval_freq",
                 "obs_format", "env_exploration_rate", "n_envs",
@@ -142,6 +129,8 @@ def main():
 
     if args.one_hot:
         obs_format = OBS_FORMAT_ONE_HOT
+
+    filter_tf_warnings()
 
     train(alg, obs_format, env_agent, self_play, train_episodes=args.episodes,
           eval_freq=args.freq, player_one_char=args.player_one, gamma=args.gamma, n_envs=args.n_envs)

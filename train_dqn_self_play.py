@@ -1,7 +1,3 @@
-import os
-import warnings
-import logging
-
 from stable_baselines import DQN
 
 from gym_tictactoe.envs.tictactoe_env import TicTacToeEnv
@@ -10,19 +6,12 @@ from gym_tictactoe.agents.min_max_agent import MinMaxAgent
 from gym_tictactoe.agents.random_agent import RandomAgent
 
 from utils.hyperparams import P_CHAR, REWARDS, ENV_EXP
+from utils.utils import filter_tf_warnings
 
 from train import train
 
-# Filter tensorflow version warnings
-# https://stackoverflow.com/questions/40426502/is-there-a-way-to-suppress-the-messages-tensorflow-prints/40426709
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
 
-# https://stackoverflow.com/questions/15777951/how-to-suppress-pandas-future-warning
-warnings.simplefilter(action='ignore', category=FutureWarning)
-warnings.simplefilter(action='ignore', category=Warning)
-
-logging.getLogger("tensorflow").setLevel(logging.ERROR)
-
+filter_tf_warnings()
 
 ALG = DQN
 
