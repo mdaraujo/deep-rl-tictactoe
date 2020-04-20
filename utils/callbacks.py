@@ -99,12 +99,13 @@ class PlotTestSaveCallback(object):
         # Save train logs
         elapsed_time_seconds, elapsed_time_h = get_elapsed_time(time.time(), self.start_time)
 
-        train_logs = {"end_episode": self.current_episode,
-                      "end_score": round(self.test_framework.current_score, 2),
-                      "best_score": round(self.test_framework.best_score, 2),
-                      "elapsed_time": int(elapsed_time_seconds),
-                      "elapsed_time_h": elapsed_time_h,
-                      "save_logs": self.save_logs}
+        train_logs = OrderedDict()
+        train_logs['end_episode'] = self.current_episode
+        train_logs['end_score'] = round(self.test_framework.current_score, 2)
+        train_logs['best_score'] = round(self.test_framework.best_score, 2)
+        train_logs['elapsed_time'] = int(elapsed_time_seconds)
+        train_logs['elapsed_time_h'] = elapsed_time_h
+        train_logs['save_logs'] = self.save_logs
 
         with open(self.log_dir + "/train_logs.json", "w") as f:
             json.dump(OrderedDict(train_logs), f, indent=4)
@@ -214,8 +215,8 @@ class PlotTestSaveCallback(object):
         # Save the best model
         if self.test_framework.best_score == self.test_framework.current_score:
 
-            self.save_logs.append({"episode": self.current_episode,
-                                   "best_score": round(self.test_framework.best_score, 2)})
+            self.save_logs.append(OrderedDict([("episode", self.current_episode),
+                                               ("best_score", round(self.test_framework.best_score, 2))]))
 
             self.model.save(self.log_dir + "/" + self.alg_name + "_best")
 
@@ -418,7 +419,8 @@ class PlotTestSaveCallback(object):
         else:
             self.plot_states[0].set_data(self.x_values, self.agent_board_states_count)
 
-        self.plot_states[1].set_title("{} | Max: {}".format(self.plot_mr_title, self.agent_board_states_count[-1]))
+        self.plot_states[1].set_title("{} | Max: {}".format(
+            self.plot_board_states_title, self.agent_board_states_count[-1]))
         self.plot_states[1].relim()
         self.plot_states[1].autoscale_view(True, True, True)
         self.plot_states[2].tight_layout()

@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from collections import OrderedDict
 
 OBS_FORMAT_RAW = "RAW"
 OBS_FORMAT_ONE_HOT = "ONE_HOT"
@@ -11,7 +12,7 @@ class Agent(ABC):
         self._name = name
         self._obs_format = obs_format
         self._rewards = None
-        self._board_states = {}
+        self._board_states = OrderedDict()
 
     @property
     def name(self):

@@ -99,9 +99,9 @@ class AgentTestFramework:
         if train_time:
             self.other_params['TrainTime'] = train_time
 
-        self.all_board_states.append({"test_agent": self.test_agent.name,
-                                      "total_boards": len(self.test_agent.board_states),
-                                      "boards": self.test_agent.board_states})
+        self.all_board_states.append(OrderedDict([("test_agent", self.test_agent.name),
+                                                  ("total_boards", len(self.test_agent.board_states)),
+                                                  ("boards", self.test_agent.board_states)]))
 
         with open(self.log_dir + "/test_agents_states.json", "w") as f:
             json.dump(self.all_board_states, f, indent=4)
@@ -178,8 +178,8 @@ class AgentTestFramework:
                                                                                         self.best_score,
                                                                                         self.best_train_episode))
 
-        self.plot[2].set_label("WinsVsRandom1º | {:5.2f}".format(self.res_random_first[self.best_score_idx][0]))
-        self.plot[3].set_label("WinsVsRandom2º | {:5.2f}".format(self.res_random_second[self.best_score_idx][0]))
+        self.plot[2].set_label("WinsVsRandom1º| {:5.2f}".format(self.res_random_first[self.best_score_idx][0]))
+        self.plot[3].set_label("WinsVsRandom2º| {:5.2f}".format(self.res_random_second[self.best_score_idx][0]))
         self.plot[4].set_label("DrawsVsMinMax1º| {:5.2f}".format(self.res_minmax_first[self.best_score_idx][1]))
         self.plot[5].set_label("DrawsVsMinMax2º| {:5.2f}".format(self.res_minmax_second[self.best_score_idx][1]))
         self.plot[6].set_label("Score (Average)| {:5.2f}".format(self.best_score))
@@ -285,11 +285,12 @@ class AgentTestFramework:
         new_env_boards = total_env_boards - env_boards
 
         if not isinstance(env_agent, RLAgent):
-            board_states = {"env_agent": env_agent.name,
-                            "player_one": player_one_char,
-                            "current_idx": self.current_idx,
-                            "total_env_boards": total_env_boards,
-                            "env_boards": env_agent.board_states.copy()}
+            board_states = OrderedDict()
+            board_states['env_agent'] = env_agent.name
+            board_states['player_one'] = player_one_char
+            board_states['current_idx'] = self.current_idx
+            board_states['total_env_boards'] = total_env_boards
+            board_states['env_boards'] = env_agent.board_states.copy()
 
             self.all_board_states.append(board_states)
 
