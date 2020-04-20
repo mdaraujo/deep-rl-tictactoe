@@ -16,7 +16,8 @@ from utils.utils import get_env, get_elapsed_time, FIG_SIZE
 from utils.rl_agent import RLAgent
 
 TEST_HEADER = ["Episodes", "First Player", "Second Player", "Wins", "Draws",
-               "Losses", "Invalids", "Mean Reward", "test_time", "Score"]
+               "Losses", "Invalids", "Mean Reward", "test_time",
+               "new_boards", "total_boards", "new_env_boards", "total_env_boards"]
 
 
 class AgentTestFramework:
@@ -27,8 +28,10 @@ class AgentTestFramework:
         self.log_dir = log_dir
         self.out_file = out_file
         self.verbose = verbose
-        self.random_agent = RandomAgent()
-        self.minmax_agent = MinMaxAgent()
+        self.random_agent_first = RandomAgent()
+        self.random_agent_second = RandomAgent()
+        self.minmax_agent_first = MinMaxAgent()
+        self.minmax_agent_second = MinMaxAgent()
         self.res_random_first = []
         self.res_random_second = []
         self.res_minmax_first = []
@@ -42,6 +45,7 @@ class AgentTestFramework:
         self.x_values = []
         self.scores = []
         self.other_params = {}
+        self.all_board_states = []
 
         with open(os.path.join(self.log_dir, 'params.json'), 'r') as f:
             self.train_params = json.load(f, object_pairs_hook=OrderedDict)
@@ -50,10 +54,12 @@ class AgentTestFramework:
 
         start_time = time.time()
 
-        self.res_random_first.append(self.evaluate(self.random_agent, 'X'))
-        self.res_random_second.append(self.evaluate(self.random_agent, 'O'))
-        self.res_minmax_first.append(self.evaluate(self.minmax_agent, 'X'))
-        self.res_minmax_second.append(self.evaluate(self.minmax_agent, 'O'))
+        self.all_board_states.clear()
+
+        self.res_random_first.append(self.evaluate(self.random_agent_first, 'X'))
+        self.res_random_second.append(self.evaluate(self.random_agent_second, 'O'))
+        self.res_minmax_first.append(self.evaluate(self.minmax_agent_first, 'X'))
+        self.res_minmax_second.append(self.evaluate(self.minmax_agent_second, 'O'))
 
         # Calculate Score
         # Average of wins vs random and draws vs minmax
@@ -73,11 +79,25 @@ class AgentTestFramework:
         if len(self.res_random_first) > 1:
             self.plot_test_outcomes()
 
+        self.other_params['sum_env_boards'] = len(self.random_agent_first.board_states) \
+            + len(self.random_agent_second.board_states) \
+            + len(self.minmax_agent_first.board_states) \
+            + len(self.minmax_agent_second.board_states)
+
+        self.other_params['score'] = self.current_score
+
         if train_episode:
             self.other_params['train_episode'] = train_episode
 
         if train_time:
             self.other_params['train_time'] = train_time
+
+        self.all_board_states.append({"test_agent": self.test_agent.name,
+                                      "total_boards": len(self.test_agent.board_states),
+                                      "boards": self.test_agent.board_states})
+
+        with open(self.log_dir + "/test_agents_states.json", "w") as f:
+            json.dump(self.all_board_states, f, indent=4)
 
         _, test_time_h = get_elapsed_time(time.time(), start_time)
 
@@ -90,10 +110,18 @@ class AgentTestFramework:
     def write_test_outcomes(self):
 
         rows = []
-        rows.append([self.num_episodes, self.test_agent.name, self.random_agent.name] + self.res_random_first[-1])
-        rows.append([self.num_episodes, self.random_agent.name, self.test_agent.name] + self.res_random_second[-1])
-        rows.append([self.num_episodes, self.test_agent.name, self.minmax_agent.name] + self.res_minmax_first[-1])
-        rows.append([self.num_episodes, self.minmax_agent.name, self.test_agent.name] + self.res_minmax_second[-1])
+
+        rows.append([self.num_episodes, self.test_agent.name, self.random_agent_first.name]
+                    + self.res_random_first[-1])
+
+        rows.append([self.num_episodes, self.random_agent_second.name, self.test_agent.name]
+                    + self.res_random_second[-1])
+
+        rows.append([self.num_episodes, self.test_agent.name, self.minmax_agent_first.name]
+                    + self.res_minmax_first[-1])
+
+        rows.append([self.num_episodes, self.minmax_agent_second.name, self.test_agent.name]
+                    + self.res_minmax_second[-1])
 
         with open(os.path.join(self.log_dir, self.out_file), 'a') as f:
             writer = csv.writer(f)
@@ -103,7 +131,7 @@ class AgentTestFramework:
             writer.writerow(header)
 
             for row in rows:
-                new_row = row + [self.current_score] + list(self.other_params.values())
+                new_row = row + list(self.other_params.values())
                 new_row = [x if type(x) is not float else format(x, '.2f') for x in new_row]
                 new_row.extend(self.train_params.values())
                 writer.writerow(new_row)
@@ -122,9 +150,9 @@ class AgentTestFramework:
             ax1.set_xlabel('Train Episode')
             ax1.set_ylabel('Outcomes %')
 
-            line1, = ax1.plot(self.x_values, wins_random_first, 'b')
+            line1, = ax1.plot(self.x_values, wins_random_first, 'blue')
             line2, = ax1.plot(self.x_values, wins_random_second, 'cyan')
-            line3, = ax1.plot(self.x_values, draws_minmax_first, 'green')
+            line3, = ax1.plot(self.x_values, draws_minmax_first, 'darkgreen')
             line4, = ax1.plot(self.x_values, draws_minmax_second, 'mediumseagreen')
             line5, = ax1.plot(self.x_values, self.scores, 'orangered')
 
@@ -157,6 +185,9 @@ class AgentTestFramework:
     def evaluate(self, env_agent, player_one_char):
 
         start_time = time.time()
+
+        boards = len(self.test_agent.board_states)
+        env_boards = len(env_agent.board_states)
 
         if self.verbose:
             print("\n\n --- Evaluating vs {}. First Player: {}. Episodes: {}.".format(
@@ -237,6 +268,21 @@ class AgentTestFramework:
         if self.verbose:
             print("Episode: {:6d} | Mean reward: {:5.2f}".format(self.num_episodes, mean_reward))
 
+        total_boards = len(self.test_agent.board_states)
+        new_boards = total_boards - boards
+
+        total_env_boards = len(env_agent.board_states)
+        new_env_boards = total_env_boards - env_boards
+
+        # print(env_agent.board_states)
+        board_states = {"env_agent": env_agent.name,
+                        "player_one": player_one_char,
+                        "current_idx": self.current_idx,
+                        "total_env_boards": total_env_boards,
+                        "env_boards": env_agent.board_states.copy()}
+
+        self.all_board_states.append(board_states)
+
         _, test_time_h = get_elapsed_time(time.time(), start_time)
 
         return [win_count * 100.0 / self.num_episodes,
@@ -244,4 +290,8 @@ class AgentTestFramework:
                 loss_count * 100.0 / self.num_episodes,
                 invalid_count * 100.0 / self.num_episodes,
                 float(mean_reward),
-                test_time_h]
+                test_time_h,
+                new_boards,
+                total_boards,
+                new_env_boards,
+                total_env_boards]

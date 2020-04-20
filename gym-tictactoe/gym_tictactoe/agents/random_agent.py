@@ -9,6 +9,9 @@ class RandomAgent(Agent):
         super().__init__("Random", OBS_FORMAT_RAW)
 
     def play(self, obs):
+
+        super().play(obs)
+
         available_actions = []
 
         for i in range(9):

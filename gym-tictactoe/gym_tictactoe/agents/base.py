@@ -11,6 +11,7 @@ class Agent(ABC):
         self._name = name
         self._obs_format = obs_format
         self._rewards = None
+        self._board_states = {}
 
     @property
     def name(self):
@@ -22,8 +23,16 @@ class Agent(ABC):
 
     @abstractmethod
     def play(self, obs):
+        if str(obs) in self._board_states:
+            self._board_states[str(obs)] += 1
+        else:
+            self._board_states[str(obs)] = 1
         pass
 
     @property
     def rewards(self):
         return self._rewards
+
+    @property
+    def board_states(self):
+        return self._board_states

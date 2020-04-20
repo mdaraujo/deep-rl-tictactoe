@@ -37,6 +37,8 @@ class RLAgent(Agent):
 
     def play(self, obs):
 
+        super().play(obs)
+
         if self.deterministic:
 
             action_max = np.argmax(self.model.action_probability(obs))

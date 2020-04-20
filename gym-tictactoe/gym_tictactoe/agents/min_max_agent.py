@@ -151,6 +151,8 @@ class MinMaxAgent(Agent):
 
     def play(self, obs):
 
+        super().play(obs)
+
         if np.sum(obs) == 0:
             self.first_player = self.side
         elif np.sum(obs) == self.other_side:
