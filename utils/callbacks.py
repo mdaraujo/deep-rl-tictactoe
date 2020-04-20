@@ -172,7 +172,7 @@ class PlotTestSaveCallback(object):
         # Update test agent
         if not self.agent:
             self.agent = RLAgent(self.log_dir, model=self.model)
-            self.test_framework = AgentTestFramework(self.agent, 1000, self.log_dir, verbose=False)
+            self.test_framework = AgentTestFramework(self.agent, 2000, self.log_dir, verbose=False)
         else:
             self.agent.model = self.model
 
