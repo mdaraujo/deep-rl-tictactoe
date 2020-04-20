@@ -15,9 +15,9 @@ from gym_tictactoe.agents.min_max_agent import MinMaxAgent
 from utils.utils import get_env, get_elapsed_time, FIG_SIZE
 from utils.rl_agent import RLAgent
 
-TEST_HEADER = ["Episodes", "First Player", "Second Player", "Wins", "Draws",
-               "Losses", "Invalids", "Mean Reward", "test_time",
-               "new_boards", "total_boards", "new_env_boards", "total_env_boards"]
+TEST_HEADER = ["Episodes", "FirstPlayer", "SecondPlayer", "Wins", "Draws",
+               "Losses", "Invalids", "MeanReward", "TestTime",
+               "NewBoards", "TotalBoards", "NewEnvBoards", "TotalEnvBoards"]
 
 
 class AgentTestFramework:
@@ -45,7 +45,7 @@ class AgentTestFramework:
         self.plot = None
         self.x_values = []
         self.scores = []
-        self.other_params = {}
+        self.other_params = OrderedDict()
         self.all_board_states = []
         self.n_self_episodes = num_episodes
 
@@ -86,18 +86,18 @@ class AgentTestFramework:
         if len(self.res_random_first) > 1:
             self.plot_test_outcomes()
 
-        self.other_params['sum_env_boards'] = len(self.random_agent_first.board_states) \
+        self.other_params['SumEnvBoards'] = len(self.random_agent_first.board_states) \
             + len(self.random_agent_second.board_states) \
             + len(self.minmax_agent_first.board_states) \
             + len(self.minmax_agent_second.board_states)
 
-        self.other_params['score'] = self.current_score
+        self.other_params['Score'] = self.current_score
 
         if train_episode:
-            self.other_params['train_episode'] = train_episode
+            self.other_params['TrainEpisode'] = train_episode
 
         if train_time:
-            self.other_params['train_time'] = train_time
+            self.other_params['TrainTime'] = train_time
 
         self.all_board_states.append({"test_agent": self.test_agent.name,
                                       "total_boards": len(self.test_agent.board_states),
@@ -108,7 +108,7 @@ class AgentTestFramework:
 
         _, test_time_h = get_elapsed_time(time.time(), start_time)
 
-        self.other_params['total_test_time'] = test_time_h
+        self.other_params['TotalTestTime'] = test_time_h
 
         self.write_test_outcomes()
 
