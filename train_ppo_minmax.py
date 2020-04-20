@@ -9,7 +9,7 @@ from gym_tictactoe.agents.base import OBS_FORMAT_2D
 from gym_tictactoe.agents.min_max_agent import MinMaxAgent
 from gym_tictactoe.agents.random_agent import RandomAgent
 
-from utils.hyperparams import P_CHAR, NET_ARCH, REWARDS
+from utils.hyperparams import P_CHAR, REWARDS
 
 from train import train
 
@@ -32,21 +32,23 @@ OBS_FORMAT = OBS_FORMAT_2D
 
 SELF_PLAY = False
 
-TRAIN_EPISODES = 200000
+TRAIN_EPISODES = 400000
 
-EVAL_FREQ = 10000
+EVAL_FREQ = 40000
 
 # invalid_rewards = [2, 1, 0, -1, -10]
 
 P_CHAR = '-'
 
-GAMMA = [1.0]
+GAMMA = [0.99, 1.0]
 
 ENV_EXP = [0.2, 0.5]
 
 N_ENVS = 8
 
-N_REPEATS = 5
+N_REPEATS = 3
+
+NET_ARCH = [[256, 128, 256]]
 
 total_trainings = len(REWARDS) * len(GAMMA) * len(ENV_EXP) * len(NET_ARCH) * N_REPEATS
 count = 0
