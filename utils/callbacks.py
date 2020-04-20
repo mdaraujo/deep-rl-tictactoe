@@ -48,13 +48,15 @@ class PlotTestSaveCallback(object):
         self.model = None
         self.env_agent = None
         self.env = env
-        self.agent = None
+        self.test_agent = None
         self.test_framework = None
+        self.agent_board_states = OrderedDict()
+        self.agent_board_states_count = []
+        self.plot_states = None
 
         with open(self.log_dir + "/params.json", "r") as f:
             params = json.load(f)
             self.alg_name = params["alg"]
-            self.plot_mr_fig = "{}/train_rewards_{}.png".format(self.log_dir, self.alg_name)
 
             self.env_agent_name = params["env_agent"]
 
@@ -69,12 +71,18 @@ class PlotTestSaveCallback(object):
             self.plot_outcomes_title = "{} Training Outcomes Vs {}".format(
                 self.alg_name, self.env_agent_name)
 
+            self.plot_board_states_title = "{} Training States Vs {}".format(
+                self.alg_name, self.env_agent_name)
+
             if self.env_exploration_rate > 0:
                 self.plot_mr_title = "{} eps={}".format(
                     self.plot_mr_title, self.env_exploration_rate)
 
                 self.plot_outcomes_title = "{} eps={}".format(
                     self.plot_outcomes_title, self.env_exploration_rate)
+
+                self.plot_board_states_title = "{} eps={}".format(
+                    self.plot_board_states_title, self.env_exploration_rate)
 
     def __enter__(self):  # create the progress bar and callback, return the callback
         self.pbar = tqdm(total=self.train_episodes)
@@ -101,6 +109,14 @@ class PlotTestSaveCallback(object):
         with open(self.log_dir + "/train_logs.json", "w") as f:
             json.dump(OrderedDict(train_logs), f, indent=4)
 
+        # Save agent board states
+        board_states = OrderedDict()
+        board_states['total_boards'] = len(self.agent_board_states)
+        board_states['boards'] = self.agent_board_states
+
+        with open(self.log_dir + "/train_agent_states.json", "w") as f:
+            json.dump(board_states, f, indent=4)
+
         self.pbar.n = self.train_episodes
         self.pbar.update(0)
         self.pbar.close()
@@ -114,13 +130,18 @@ class PlotTestSaveCallback(object):
         :return: (bool)
         """
 
-        # print("\n\n\nlocals_.keys:", locals_.keys())
+        # print("\n\n\n -------- \n\nlocals_.keys:", locals_.keys())
         # print("\nlocals_:", locals_)
         # print("\n\n\nglobals_.keys:", globals_.keys())
         # print("\nglobals_:", globals_)
         # exit(0)
 
         if 'DQN' in globals_:
+
+            obs = locals_['obs']
+
+            self.add_new_board_state(obs)
+
             if 'info' in locals_:
                 # print("\ninfo: {}".format(locals_['info']))
                 if 'episode' in locals_['info']:
@@ -136,6 +157,10 @@ class PlotTestSaveCallback(object):
                 return
 
         elif 'PPO2' in globals_:
+
+            for obs in locals_['obs']:
+                self.add_new_board_state(obs)
+
             # print("ep_infos:", locals_['ep_infos'])
             df = pd.DataFrame(locals_['ep_infos'])
             # print("current:", len(self.results))
@@ -147,6 +172,10 @@ class PlotTestSaveCallback(object):
 
         # Get the self object of the model
         self.model = locals_['self']
+
+        # print(len(self.agent_board_states))
+
+        self.agent_board_states_count.append(len(self.agent_board_states))
 
         # self.results = load_results(self.log_dir)
 
@@ -161,6 +190,7 @@ class PlotTestSaveCallback(object):
             if len(self.x_values) > 1:
                 self.plot_train_rewards()
                 self.plot_train_outcomes()
+                self.plot_board_states()
 
             self.write_train_results()
 
@@ -170,11 +200,11 @@ class PlotTestSaveCallback(object):
             # print("after drop:", self.results)
 
         # Update test agent
-        if not self.agent:
-            self.agent = RLAgent(self.log_dir, model=self.model)
-            self.test_framework = AgentTestFramework(self.agent, 2000, self.log_dir, verbose=False)
+        if not self.test_agent:
+            self.test_agent = RLAgent(self.log_dir, model=self.model)
+            self.test_framework = AgentTestFramework(self.test_agent, 2000, self.log_dir, verbose=False)
         else:
-            self.agent.model = self.model
+            self.test_agent.model = self.model
 
         # Test
         _, elapsed_time_h = get_elapsed_time(time.time(), self.start_time)
@@ -289,7 +319,6 @@ class PlotTestSaveCallback(object):
 
         if self.plot_mr is None:
             fig1, ax1 = plt.subplots(figsize=FIG_SIZE)
-            ax1.set_title(self.plot_mr_title)
             ax1.set_xlabel('Number of Episodes')
             ax1.set_ylabel('Mean {} Episode Reward'.format(self.eval_freq))
 
@@ -297,13 +326,14 @@ class PlotTestSaveCallback(object):
             self.plot_mr = (line, ax1, fig1)
         else:
             self.plot_mr[0].set_data(self.x_values, self.mean_rewards)
-            self.plot_mr[1].relim()
-            self.plot_mr[1].autoscale_view(True, True, True)
-            self.plot_mr[2].tight_layout()
-            self.plot_mr[2].canvas.draw()
 
         self.plot_mr[1].set_title("{} | Best: {:5.2f}".format(self.plot_mr_title, self.best_mean_reward))
-        self.plot_mr[2].savefig(self.plot_mr_fig)
+        self.plot_mr[1].relim()
+        self.plot_mr[1].autoscale_view(True, True, True)
+        self.plot_mr[2].tight_layout()
+        self.plot_mr[2].canvas.draw()
+
+        self.plot_mr[2].savefig("{}/train_rewards_{}.png".format(self.log_dir, self.alg_name))
 
     def plot_train_outcomes(self):
 
@@ -323,11 +353,12 @@ class PlotTestSaveCallback(object):
             self.plot_outcomes[1].set_data(self.x_values, self.draws_perc)
             self.plot_outcomes[2].set_data(self.x_values, self.losses_perc)
             self.plot_outcomes[3].set_data(self.x_values, self.invalids_perc)
-            self.plot_outcomes[4].relim()
-            self.plot_outcomes[4].autoscale_view(True, True, True)
-            self.plot_outcomes[4].legend(loc='best', shadow=True, fancybox=True, framealpha=0.7)
-            self.plot_outcomes[5].tight_layout()
-            self.plot_outcomes[5].canvas.draw()
+
+        self.plot_outcomes[4].relim()
+        self.plot_outcomes[4].autoscale_view(True, True, True)
+        self.plot_outcomes[4].legend(loc='best', shadow=True, fancybox=True, framealpha=0.7)
+        self.plot_outcomes[5].tight_layout()
+        self.plot_outcomes[5].canvas.draw()
 
         self.plot_outcomes[5].savefig(self.log_dir + "/train_outcomes_" + self.alg_name + ".png")
 
@@ -367,3 +398,30 @@ class PlotTestSaveCallback(object):
                              '{:.1f}'.format(np.mean(self.invalids_perc)),
                              '{:.1f}'.format(np.mean(self.mean_rewards)),
                              '{:.1f}'.format(np.mean(self.cross_first_perc))])
+
+    def add_new_board_state(self, board):
+        board_str = str(board)
+        if board_str in self.agent_board_states:
+            self.agent_board_states[board_str] += 1
+        else:
+            self.agent_board_states[board_str] = 1
+
+    def plot_board_states(self):
+
+        if self.plot_states is None:
+            fig1, ax1 = plt.subplots(figsize=FIG_SIZE)
+            ax1.set_xlabel('Number of Episodes')
+            ax1.set_ylabel('Number of Different Board States')
+
+            line, = ax1.plot(self.x_values, self.agent_board_states_count)
+            self.plot_states = (line, ax1, fig1)
+        else:
+            self.plot_states[0].set_data(self.x_values, self.agent_board_states_count)
+
+        self.plot_states[1].set_title("{} | Max: {}".format(self.plot_mr_title, self.agent_board_states_count[-1]))
+        self.plot_states[1].relim()
+        self.plot_states[1].autoscale_view(True, True, True)
+        self.plot_states[2].tight_layout()
+        self.plot_states[2].canvas.draw()
+
+        self.plot_states[2].savefig("{}/train_agent_states.png".format(self.log_dir))

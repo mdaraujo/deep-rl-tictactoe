@@ -167,22 +167,22 @@ class AgentTestFramework:
             line5, = ax1.plot(self.x_values, self.scores, 'orangered')
 
             self.plot = (ax1, fig1, line1, line2, line3, line4, line5)
+        else:
+            self.plot[2].set_data(self.x_values, wins_random_first)
+            self.plot[3].set_data(self.x_values, wins_random_second)
+            self.plot[4].set_data(self.x_values, draws_minmax_first)
+            self.plot[5].set_data(self.x_values, draws_minmax_second)
+            self.plot[6].set_data(self.x_values, self.scores)
 
-        self.plot[0].set_title("{} Test Outcomes | Best Score {:5.2f} at Ep {}".format(self.test_agent.name,
-                                                                                       self.best_score,
-                                                                                       self.best_train_episode))
+        self.plot[0].set_title("{} Test Outcomes | Best Score: {:5.2f} at Ep {}".format(self.test_agent.name,
+                                                                                        self.best_score,
+                                                                                        self.best_train_episode))
 
         self.plot[2].set_label("WinsVsRandom1º | {:5.2f}".format(self.res_random_first[self.best_score_idx][0]))
         self.plot[3].set_label("WinsVsRandom2º | {:5.2f}".format(self.res_random_second[self.best_score_idx][0]))
         self.plot[4].set_label("DrawsVsMinMax1º| {:5.2f}".format(self.res_minmax_first[self.best_score_idx][1]))
         self.plot[5].set_label("DrawsVsMinMax2º| {:5.2f}".format(self.res_minmax_second[self.best_score_idx][1]))
         self.plot[6].set_label("Score (Average)| {:5.2f}".format(self.best_score))
-
-        self.plot[2].set_data(self.x_values, wins_random_first)
-        self.plot[3].set_data(self.x_values, wins_random_second)
-        self.plot[4].set_data(self.x_values, draws_minmax_first)
-        self.plot[5].set_data(self.x_values, draws_minmax_second)
-        self.plot[6].set_data(self.x_values, self.scores)
 
         self.plot[0].relim()
         self.plot[0].autoscale_view(True, True, True)
