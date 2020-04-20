@@ -13,12 +13,6 @@ from utils.utils import get_alg, get_env, filter_tf_warnings
 from utils.callbacks import PlotTestSaveCallback
 from utils.cnn_extractor import tic_tac_toe_cnn
 
-TRAIN_PARAMS = ["alg", "env_agent", "train_episodes", "eval_freq",
-                "obs_format", "env_exploration_rate", "n_envs",
-                "gamma", "net_arch",
-                "r_win", "r_draw", "r_still_playing", "r_lose", "r_invalid",
-                "player_one_char", "datetime"]
-
 
 def train(alg, obs_format, env_agent: Agent, self_play: bool, train_episodes=10000, eval_freq=1000, player_one_char='-', gamma=1.0, net_arch=[256, 256], rewards=TicTacToeEnv.DEFAULT_REWARDS, env_exploration_rate=0.0, n_envs=1):
 
@@ -32,22 +26,23 @@ def train(alg, obs_format, env_agent: Agent, self_play: bool, train_episodes=100
     if alg.__name__ == "DQN":
         n_envs = 1
 
-    params = {"alg": alg.__name__,
-              "env_agent": env_agent_name,
-              "train_episodes": train_episodes,
-              "eval_freq": eval_freq,
-              "obs_format": obs_format,
-              "env_exploration_rate": env_exploration_rate,
-              "n_envs": n_envs,
-              "gamma": gamma,
-              "net_arch": net_arch,
-              "r_win": rewards[0],
-              "r_draw": rewards[1],
-              "r_still_playing": rewards[2],
-              "r_lose": rewards[3],
-              "r_invalid": rewards[4],
-              "player_one_char": player_one_char,
-              "datetime": now.replace(microsecond=0).isoformat()}
+    params = OrderedDict()
+    params['alg'] = alg.__name__
+    params['env_agent'] = env_agent_name
+    params['train_episodes'] = train_episodes
+    params['eval_freq'] = eval_freq
+    params['obs_format'] = obs_format
+    params['env_exploration_rate'] = env_exploration_rate
+    params['n_envs'] = n_envs
+    params['gamma'] = gamma
+    params['net_arch'] = net_arch
+    params['r_win'] = rewards[0]
+    params['r_draw'] = rewards[1]
+    params['r_still_playing'] = rewards[2]
+    params['r_lose'] = rewards[3]
+    params['r_invalid'] = rewards[4]
+    params['player_one_char'] = player_one_char
+    params['datetime'] = now.replace(microsecond=0).isoformat()
 
     net_arch_str = '-'.join([str(elem) for elem in net_arch])
 
@@ -62,7 +57,7 @@ def train(alg, obs_format, env_agent: Agent, self_play: bool, train_episodes=100
     print("\nLog dir:", log_dir)
 
     with open(log_dir + "/params.json", "w") as f:
-        json.dump(OrderedDict(params), f, indent=4)
+        json.dump(params, f, indent=4)
 
     train_env = get_env(obs_format, env_agent, player_one_char, rewards,
                         env_exploration_rate, monitor=True, n_envs=n_envs)
