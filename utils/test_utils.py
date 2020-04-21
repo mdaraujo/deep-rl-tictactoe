@@ -15,9 +15,11 @@ from gym_tictactoe.agents.min_max_agent import MinMaxAgent
 from utils.utils import get_env, get_elapsed_time, FIG_SIZE
 from utils.rl_agent import RLAgent
 
-TEST_HEADER = ["Episodes", "FirstPlayer", "SecondPlayer", "Wins", "Draws",
-               "Losses", "Invalids", "MeanReward", "TestTime",
-               "NewTestStates", "TotalTestStates", "NewEnvStates", "TotalEnvStates"]
+TEST_HEADER = ["Episodes", "FirstPlayer", "SecondPlayer",
+               "Wins", "Draws", "Losses", "Invalids", "MeanReward",
+               "Score", "TrainEpisode", "TrainTime", "TrainStates",
+               "NewTestStates", "TotalTestStates", "NewEnvStates", "EnvAgentStates",
+               "SumEnvStates", "TestTime", "TotalTestTime"]
 
 
 class AgentTestFramework:
@@ -45,7 +47,6 @@ class AgentTestFramework:
         self.plot = None
         self.x_values = []
         self.scores = []
-        self.other_params = OrderedDict()
         self.all_board_states = []
         self.n_self_episodes = num_episodes
 
@@ -86,21 +87,10 @@ class AgentTestFramework:
         if len(self.res_random_first) > 1:
             self.plot_test_outcomes()
 
-        self.other_params['SumEnvStates'] = len(self.random_agent_first.board_states) \
+        sum_env_states = len(self.random_agent_first.board_states) \
             + len(self.random_agent_second.board_states) \
             + len(self.minmax_agent_first.board_states) \
             + len(self.minmax_agent_second.board_states)
-
-        self.other_params['Score'] = self.current_score
-
-        if train_states:
-            self.other_params['TrainStates'] = train_states
-
-        if train_episode:
-            self.other_params['TrainEpisode'] = train_episode
-
-        if train_time:
-            self.other_params['TrainTime'] = train_time
 
         self.all_board_states.append(OrderedDict([("test_agent", self.test_agent.name),
                                                   ("total_states", len(self.test_agent.board_states)),
@@ -111,41 +101,49 @@ class AgentTestFramework:
 
         _, test_time_h = get_elapsed_time(time.time(), start_time)
 
-        self.other_params['TotalTestTime'] = test_time_h
+        rows = []
 
-        self.write_test_outcomes()
+        row_piece = [self.current_score, train_episode, train_time, train_states]
+
+        rows.append([self.num_episodes, self.test_agent.name, self.random_agent_first.name]
+                    + self.res_random_first[-1][:5] + row_piece
+                    + self.res_random_first[-1][-4:] + [sum_env_states, self.res_random_first[-1][5],  test_time_h])
+
+        rows.append([self.num_episodes, self.random_agent_second.name, self.test_agent.name]
+                    + self.res_random_second[-1][:5] + row_piece
+                    + self.res_random_second[-1][-4:] + [sum_env_states, self.res_random_second[-1][5],  test_time_h])
+
+        rows.append([self.num_episodes, self.test_agent.name, self.minmax_agent_first.name]
+                    + self.res_minmax_first[-1][:5] + row_piece
+                    + self.res_minmax_first[-1][-4:] + [sum_env_states, self.res_minmax_first[-1][5],  test_time_h])
+
+        rows.append([self.num_episodes, self.minmax_agent_second.name, self.test_agent.name]
+                    + self.res_minmax_second[-1][:5] + row_piece
+                    + self.res_minmax_second[-1][-4:] + [sum_env_states, self.res_minmax_second[-1][5],  test_time_h])
+
+        rows.append([self.n_self_episodes, self.test_agent.name, self.test_agent.name]
+                    + self.res_self[-1][:5] + row_piece
+                    + self.res_self[-1][-4:] + [sum_env_states, self.res_self[-1][5],  test_time_h])
+
+        self.write_test_outcomes(rows)
 
         self.current_idx += 1
 
-    def write_test_outcomes(self):
+    def write_test_outcomes(self, rows):
 
-        rows = []
+        out_file = os.path.join(self.log_dir, self.out_file)
 
-        rows.append([self.num_episodes, self.test_agent.name, self.random_agent_first.name]
-                    + self.res_random_first[-1])
+        file_exists = os.path.isfile(out_file)
 
-        rows.append([self.num_episodes, self.random_agent_second.name, self.test_agent.name]
-                    + self.res_random_second[-1])
-
-        rows.append([self.num_episodes, self.test_agent.name, self.minmax_agent_first.name]
-                    + self.res_minmax_first[-1])
-
-        rows.append([self.num_episodes, self.minmax_agent_second.name, self.test_agent.name]
-                    + self.res_minmax_second[-1])
-
-        rows.append([self.n_self_episodes, self.test_agent.name, self.test_agent.name]
-                    + self.res_self[-1])
-
-        with open(os.path.join(self.log_dir, self.out_file), 'a') as f:
+        with open(out_file, 'a') as f:
             writer = csv.writer(f)
 
-            header = TEST_HEADER + list(self.other_params.keys()) + list(self.train_params.keys())
-
-            writer.writerow(header)
+            if not file_exists:
+                header = TEST_HEADER + list(self.train_params.keys())
+                writer.writerow(header)
 
             for row in rows:
-                new_row = row + list(self.other_params.values())
-                new_row = [x if type(x) is not float else format(x, '.2f') for x in new_row]
+                new_row = [x if type(x) is not float else format(x, '.2f') for x in row]
                 new_row.extend(self.train_params.values())
                 writer.writerow(new_row)
 
@@ -284,15 +282,15 @@ class AgentTestFramework:
         total_states = len(self.test_agent.board_states)
         new_states = total_states - states
 
-        total_env_states = len(env_agent.board_states)
-        new_env_states = total_env_states - env_states
+        env_agent_states = len(env_agent.board_states)
+        new_env_states = env_agent_states - env_states
 
         if not isinstance(env_agent, RLAgent):
             board_states = OrderedDict()
             board_states['env_agent'] = env_agent.name
             board_states['player_one'] = player_one_char
             board_states['current_idx'] = self.current_idx
-            board_states['total_env_states'] = total_env_states
+            board_states['env_agent_states'] = env_agent_states
             board_states['env_states'] = env_agent.board_states.copy()
 
             self.all_board_states.append(board_states)
@@ -308,4 +306,4 @@ class AgentTestFramework:
                 new_states,
                 total_states,
                 new_env_states,
-                total_env_states]
+                env_agent_states]
