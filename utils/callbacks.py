@@ -50,9 +50,10 @@ class PlotTestSaveCallback(object):
         self.env = env
         self.test_agent = None
         self.test_framework = None
-        self.agent_board_states = OrderedDict()
-        self.agent_board_states_count = []
+        self.states_counter = OrderedDict()
+        self.n_states_history = []
         self.plot_states = None
+        self.max_n_states_episode = 0
 
         with open(self.log_dir + "/params.json", "r") as f:
             params = json.load(f)
@@ -103,6 +104,7 @@ class PlotTestSaveCallback(object):
         train_logs['end_episode'] = self.current_episode
         train_logs['end_score'] = round(self.test_framework.current_score, 2)
         train_logs['best_score'] = round(self.test_framework.best_score, 2)
+        train_logs['total_states'] = len(self.states_counter)
         train_logs['elapsed_time'] = int(elapsed_time_seconds)
         train_logs['elapsed_time_h'] = elapsed_time_h
         train_logs['save_logs'] = self.save_logs
@@ -112,8 +114,8 @@ class PlotTestSaveCallback(object):
 
         # Save agent board states
         board_states = OrderedDict()
-        board_states['total_boards'] = len(self.agent_board_states)
-        board_states['boards'] = self.agent_board_states
+        board_states['total_states'] = len(self.states_counter)
+        board_states['states'] = self.states_counter
 
         with open(self.log_dir + "/train_agent_states.json", "w") as f:
             json.dump(board_states, f, indent=4)
@@ -174,12 +176,7 @@ class PlotTestSaveCallback(object):
         # Get the self object of the model
         self.model = locals_['self']
 
-        # print(len(self.agent_board_states))
-
-        self.agent_board_states_count.append(len(self.agent_board_states))
-
         # self.results = load_results(self.log_dir)
-
         # print(self.results)
 
         while len(self.results.index) >= self.eval_freq:
@@ -187,6 +184,13 @@ class PlotTestSaveCallback(object):
             self.current_episode += self.eval_freq
 
             self.process_train_results()
+
+            # Process board states
+            n_states = len(self.states_counter)
+            # print(n_states)
+            if self.n_states_history and n_states > self.n_states_history[-1]:
+                self.max_n_states_episode = self.current_episode
+            self.n_states_history.append(n_states)
 
             if len(self.x_values) > 1:
                 self.plot_train_rewards()
@@ -203,7 +207,7 @@ class PlotTestSaveCallback(object):
         # Update test agent
         if not self.test_agent:
             self.test_agent = RLAgent(self.log_dir, model=self.model)
-            self.test_framework = AgentTestFramework(self.test_agent, 2000, self.log_dir, verbose=False)
+            self.test_framework = AgentTestFramework(self.test_agent, 3000, self.log_dir, verbose=False)
         else:
             self.test_agent.model = self.model
 
@@ -402,10 +406,10 @@ class PlotTestSaveCallback(object):
 
     def add_new_board_state(self, board):
         board_str = str(board)
-        if board_str in self.agent_board_states:
-            self.agent_board_states[board_str] += 1
+        if board_str in self.states_counter:
+            self.states_counter[board_str] += 1
         else:
-            self.agent_board_states[board_str] = 1
+            self.states_counter[board_str] = 1
 
     def plot_board_states(self):
 
@@ -414,13 +418,13 @@ class PlotTestSaveCallback(object):
             ax1.set_xlabel('Number of Episodes')
             ax1.set_ylabel('Number of Different Board States')
 
-            line, = ax1.plot(self.x_values, self.agent_board_states_count)
+            line, = ax1.plot(self.x_values, self.n_states_history)
             self.plot_states = (line, ax1, fig1)
         else:
-            self.plot_states[0].set_data(self.x_values, self.agent_board_states_count)
+            self.plot_states[0].set_data(self.x_values, self.n_states_history)
 
-        self.plot_states[1].set_title("{} | Max: {}".format(
-            self.plot_board_states_title, self.agent_board_states_count[-1]))
+        self.plot_states[1].set_title("{} | Max: {} at Ep {}".format(
+            self.plot_board_states_title, self.n_states_history[-1], self.max_n_states_episode))
         self.plot_states[1].relim()
         self.plot_states[1].autoscale_view(True, True, True)
         self.plot_states[2].tight_layout()
