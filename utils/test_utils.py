@@ -17,7 +17,7 @@ from utils.rl_agent import RLAgent
 
 TEST_HEADER = ["Episodes", "FirstPlayer", "SecondPlayer", "Wins", "Draws",
                "Losses", "Invalids", "MeanReward", "TestTime",
-               "NewBoards", "TotalBoards", "NewEnvBoards", "TotalEnvBoards"]
+               "NewTestStates", "TotalTestStates", "NewEnvStates", "TotalEnvStates"]
 
 
 class AgentTestFramework:
@@ -52,7 +52,7 @@ class AgentTestFramework:
         with open(os.path.join(self.log_dir, 'params.json'), 'r') as f:
             self.train_params = json.load(f, object_pairs_hook=OrderedDict)
 
-    def test(self, train_episode=None, train_time=None):
+    def test(self, train_episode=None, train_time=None, train_states=None):
 
         start_time = time.time()
 
@@ -86,12 +86,15 @@ class AgentTestFramework:
         if len(self.res_random_first) > 1:
             self.plot_test_outcomes()
 
-        self.other_params['SumEnvBoards'] = len(self.random_agent_first.board_states) \
+        self.other_params['SumEnvStates'] = len(self.random_agent_first.board_states) \
             + len(self.random_agent_second.board_states) \
             + len(self.minmax_agent_first.board_states) \
             + len(self.minmax_agent_second.board_states)
 
         self.other_params['Score'] = self.current_score
+
+        if train_states:
+            self.other_params['TrainStates'] = train_states
 
         if train_episode:
             self.other_params['TrainEpisode'] = train_episode
@@ -100,8 +103,8 @@ class AgentTestFramework:
             self.other_params['TrainTime'] = train_time
 
         self.all_board_states.append(OrderedDict([("test_agent", self.test_agent.name),
-                                                  ("total_boards", len(self.test_agent.board_states)),
-                                                  ("boards", self.test_agent.board_states)]))
+                                                  ("total_states", len(self.test_agent.board_states)),
+                                                  ("states", self.test_agent.board_states)]))
 
         with open(self.log_dir + "/test_agents_states.json", "w") as f:
             json.dump(self.all_board_states, f, indent=4)
@@ -196,8 +199,8 @@ class AgentTestFramework:
 
         start_time = time.time()
 
-        boards = len(self.test_agent.board_states)
-        env_boards = len(env_agent.board_states)
+        states = len(self.test_agent.board_states)
+        env_states = len(env_agent.board_states)
 
         if self.verbose:
             print("\n\n --- Evaluating vs {}. First Player: {}. Episodes: {}.".format(
@@ -278,19 +281,19 @@ class AgentTestFramework:
         if self.verbose:
             print("Episode: {:6d} | Mean reward: {:5.2f}".format(n_episodes, mean_reward))
 
-        total_boards = len(self.test_agent.board_states)
-        new_boards = total_boards - boards
+        total_states = len(self.test_agent.board_states)
+        new_states = total_states - states
 
-        total_env_boards = len(env_agent.board_states)
-        new_env_boards = total_env_boards - env_boards
+        total_env_states = len(env_agent.board_states)
+        new_env_states = total_env_states - env_states
 
         if not isinstance(env_agent, RLAgent):
             board_states = OrderedDict()
             board_states['env_agent'] = env_agent.name
             board_states['player_one'] = player_one_char
             board_states['current_idx'] = self.current_idx
-            board_states['total_env_boards'] = total_env_boards
-            board_states['env_boards'] = env_agent.board_states.copy()
+            board_states['total_env_states'] = total_env_states
+            board_states['env_states'] = env_agent.board_states.copy()
 
             self.all_board_states.append(board_states)
 
@@ -302,7 +305,7 @@ class AgentTestFramework:
                 invalid_count * 100.0 / n_episodes,
                 float(mean_reward),
                 test_time_h,
-                new_boards,
-                total_boards,
-                new_env_boards,
-                total_env_boards]
+                new_states,
+                total_states,
+                new_env_states,
+                total_env_states]

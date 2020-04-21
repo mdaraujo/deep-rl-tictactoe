@@ -214,7 +214,7 @@ class PlotTestSaveCallback(object):
         # Test
         _, elapsed_time_h = get_elapsed_time(time.time(), self.start_time)
 
-        self.test_framework.test(train_episode=self.current_episode, train_time=elapsed_time_h)
+        self.test_framework.test(self.current_episode, elapsed_time_h, len(self.states_counter))
 
         # Save the best model
         if self.test_framework.best_score == self.test_framework.current_score:
