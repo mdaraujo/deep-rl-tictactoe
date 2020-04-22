@@ -6,7 +6,9 @@ ALG = [PPO2, DQN]
 
 SELF_PLAY = [True, False]
 
-base_rewards = [1, 0, 0, -1, -2]
+# base_rewards = [1, 0, 0, -1, -2]
+
+base_rewards = [2, 1, 0, -2, -3]
 
 REWARDS = [TicTacToeEnv.DEFAULT_REWARDS, base_rewards]
 
@@ -14,7 +16,7 @@ OBS_FORMAT = [OBS_FORMAT_2D, OBS_FORMAT_ONE_HOT, OBS_FORMAT_RAW]
 
 P_CHAR = '-'
 
-GAMMA = [0.99, 1.0]
+GAMMA = [1.0, 0.99]
 
 ENV_EXP = [0.0, 0.2, 0.5]
 

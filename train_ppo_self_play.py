@@ -21,33 +21,34 @@ OBS_FORMAT = OBS_FORMAT_2D
 
 SELF_PLAY = True
 
-TRAIN_EPISODES = 400000
+TRAIN_EPISODES = 600000
 
-EVAL_FREQ = 40000
-
-# invalid_rewards = [2, 1, 0, -1, -10]
+EVAL_FREQ = [60000, 30000]
 
 P_CHAR = '-'
 
-GAMMA = [0.99, 1.0]
+GAMMA = [1.0]
+
+ENV_EXP = [0.2, 0.5]
 
 N_ENVS = 8
 
 N_REPEATS = 3
 
-NET_ARCH = [[256, 128, 256]]
+NET_ARCH = [[256, 128, 256], [512, 128, 256]]
 
-total_trainings = len(REWARDS) * len(GAMMA) * len(ENV_EXP) * len(NET_ARCH) * N_REPEATS
+total_trainings = len(REWARDS) * len(GAMMA) * len(ENV_EXP) * len(NET_ARCH) * len(EVAL_FREQ) * N_REPEATS
 count = 0
 
-for rewards in REWARDS:
+for eval_freq in EVAL_FREQ:
     for gamma in GAMMA:
-        for env_exp in ENV_EXP:
-            for net_arch in NET_ARCH:
-                for _ in range(N_REPEATS):
+        for rewards in REWARDS:
+            for env_exp in ENV_EXP:
+                for net_arch in NET_ARCH:
+                    for _ in range(N_REPEATS):
 
-                    count += 1
-                    print("\n\nTraining {} / {}".format(count, total_trainings))
+                        count += 1
+                        print("\n\nTraining {} / {}".format(count, total_trainings))
 
-                    train(ALG, OBS_FORMAT, ENV_AGENT, SELF_PLAY, TRAIN_EPISODES,
-                          EVAL_FREQ, P_CHAR, gamma, net_arch, rewards, env_exp, N_ENVS)
+                        train(ALG, OBS_FORMAT, ENV_AGENT, SELF_PLAY, TRAIN_EPISODES,
+                              eval_freq, P_CHAR, gamma, net_arch, rewards, env_exp, N_ENVS)
