@@ -4,18 +4,23 @@ import csv
 import json
 import pandas as pd
 
+from utils.hyperparams import N_REPEATS
+
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("logdir",
-                        help="log directory")
+    parser.add_argument("logdir", help="log directory")
+    parser.add_argument('-n', '--n_repeats', type=int, default=N_REPEATS)
     args = parser.parse_args()
 
     log_dir = args.logdir
+    n_repeats = args.n_repeats
 
     all_subdirs = [log_dir + '/' + d for d in sorted(os.listdir(log_dir)) if os.path.isdir(log_dir + '/' + d)]
 
     results_list = []
+
+    count = 0
 
     for sub_dir in all_subdirs:
 
@@ -45,10 +50,26 @@ def main():
 
         df['TotalTrainTime'] = total_train_time
 
+        count += 1
+
         # Add empty line
         df = df.append(pd.Series(), ignore_index=True)
 
-        # Append to dfs set
+        if count >= n_repeats:
+
+            # Calculate average
+            avg_score = 0
+            for i in range(n_repeats - 1):
+                avg_score += results_list[-i]['Score'][0]
+            avg_score += df['Score'][0]
+            avg_score /= n_repeats
+
+            df = df.append({'Score': avg_score}, ignore_index=True)
+
+            # Add another empty line
+            df = df.append(pd.Series(), ignore_index=True)
+            count = 0
+
         results_list.append(df)
 
     df = pd.concat(results_list, axis=0, ignore_index=True, sort=False)

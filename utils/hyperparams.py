@@ -24,4 +24,4 @@ ENV_EXP = [0.0, 0.2, 0.5]
 
 N_ENVS = [1, 4, 8, 16]
 
-N_REPEATS = 5
+N_REPEATS = 3

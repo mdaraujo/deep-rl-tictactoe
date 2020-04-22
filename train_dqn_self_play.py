@@ -5,7 +5,7 @@ from gym_tictactoe.agents.base import OBS_FORMAT_2D
 from gym_tictactoe.agents.min_max_agent import MinMaxAgent
 from gym_tictactoe.agents.random_agent import RandomAgent
 
-from utils.hyperparams import P_CHAR, REWARDS
+from utils.hyperparams import P_CHAR, REWARDS, N_REPEATS
 from utils.utils import filter_tf_warnings
 
 from train import train
@@ -32,8 +32,6 @@ GAMMA = [1.0]
 ENV_EXP = [0.2]
 
 N_ENVS = 1
-
-N_REPEATS = 3
 
 NET_ARCH = [[256, 256, 512], [512, 128, 256]]
 
