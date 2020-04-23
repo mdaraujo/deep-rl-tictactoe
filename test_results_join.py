@@ -16,7 +16,12 @@ def main():
     log_dir = args.logdir
     n_repeats = args.n_repeats
 
-    all_subdirs = [log_dir + '/' + d for d in sorted(os.listdir(log_dir)) if os.path.isdir(log_dir + '/' + d)]
+    all_subdirs = []
+
+    for root, _, _ in os.walk(log_dir):
+        all_subdirs.append(root)
+
+    all_subdirs.sort()
 
     results_list = []
 
@@ -24,7 +29,11 @@ def main():
 
     for sub_dir in all_subdirs:
 
-        print("\nJoining test outcomes in dir:", sub_dir)
+        if not sub_dir[-1].isdigit():
+            print("\n", sub_dir)
+            count = 0
+            results_list.append(pd.DataFrame({'Episodes': ['', sub_dir, '', '']}))
+            continue
 
         train_logs_file = os.path.join(sub_dir, 'train_logs.json')
 
@@ -41,6 +50,8 @@ def main():
         if not os.path.isfile(results_file):
             print("Results file not found: {}".format(results_file))
             continue
+
+        print("Joining test outcomes in dir:", sub_dir)
 
         df = pd.read_csv(results_file, index_col=None, header=0)
 
@@ -59,7 +70,7 @@ def main():
 
             # Calculate average
             avg_score = 0
-            for i in range(n_repeats - 1):
+            for i in range(1, n_repeats):
                 avg_score += results_list[-i]['Score'][0]
             avg_score += df['Score'][0]
             avg_score /= n_repeats
