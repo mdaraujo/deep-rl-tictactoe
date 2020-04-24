@@ -14,7 +14,7 @@ from utils.callbacks import PlotTestSaveCallback
 from utils.cnn_extractor import tic_tac_toe_cnn
 
 
-def train(alg, obs_format, env_agent: Agent, self_play: bool, train_episodes=10000, eval_freq=1000, player_one_char='-', gamma=1.0, net_arch=[256, 256], rewards=TicTacToeEnv.DEFAULT_REWARDS, env_exploration_rate=0.0, n_envs=1):
+def train(alg, obs_format, env_agent: Agent, self_play: bool, train_episodes=10000, eval_freq=1000, player_one_char='-', gamma=1.0, net_arch=[256, 256, 512], rewards=TicTacToeEnv.DEFAULT_REWARDS, env_exploration_rate=0.0, n_envs=1):
 
     now = datetime.now()
 
@@ -91,16 +91,26 @@ def train(alg, obs_format, env_agent: Agent, self_play: bool, train_episodes=100
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-a', '--alg', type=str, default='PPO2')
-    parser.add_argument('-e', '--episodes', type=int, default=10000)
-    parser.add_argument('-f', '--freq', type=int, default=1000)
-    parser.add_argument('-p', '--player_one', type=str, default='-')
-    parser.add_argument('-g', '--gamma', type=float, default=1.0)
-    parser.add_argument("-r", "--random_agent", action="store_true")
-    parser.add_argument("-m", "--min_max", action="store_true")
-    parser.add_argument("-o", "--one_hot", action="store_true")
-    parser.add_argument('-n', '--n_envs', type=int, default=8)
+    parser = argparse.ArgumentParser(
+        description='Train a model, plot training and testing results, and save the model.')
+    parser.add_argument('-a', '--alg', type=str, default='DQN',
+                        help='Algorithm name. PPO2 or DQN (default: DQN)')
+    parser.add_argument('-e', '--episodes', type=int, default=10000,
+                        help='Training Episodes (default: 10000)')
+    parser.add_argument('-f', '--freq', type=int, default=1000,
+                        help='Evaluation Frequency (default: 1000)')
+    parser.add_argument('-p', '--player_one', type=str, default='-',
+                        help='X for the agent, O for the environment, or - for randomly choosing in each train episode (default: -)')
+    parser.add_argument('-g', '--gamma', type=float, default=1.0,
+                        help='Gamma (default: 1.0)')
+    parser.add_argument("-r", "--random_agent", action="store_true",
+                        help='Train vs Random agent (default: Train vs Self)')
+    parser.add_argument("-m", "--min_max", action="store_true",
+                        help='Train vs MinMax agent (default: Train vs Self)')
+    parser.add_argument("-o", "--one_hot", action="store_true",
+                        help='Use one hot encoded observations (Mlp) (default: Use 2D observations (Cnn))')
+    parser.add_argument('-n', '--n_envs', type=int, default=8,
+                        help='Number of parallel environments when using PPO2 (default: 8)')
     args = parser.parse_args()
 
     alg = get_alg(args.alg)

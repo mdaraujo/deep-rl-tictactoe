@@ -7,16 +7,19 @@ from utils.test_utils import AgentTestFramework, TEST_EPISODES
 
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description='Test a model inside a directory or a set of models.')
     parser.add_argument("logdir",
                         help="log directory")
-    parser.add_argument("-l", "--latest", action="store_true",
-                        help="use latest dir inside 'logdir'")
     parser.add_argument("-a", "--all", action="store_true",
-                        help="run for all subdirs of 'logdir'")
-    parser.add_argument('-e', '--episodes', type=int, default=TEST_EPISODES)
-    parser.add_argument("-v", "--verbose", action="store_true")
-    parser.add_argument('-s', '--model_suffix', type=str, default="")
+                        help="Run for all subdirs of 'logdir' (default: run for 'logdir')")
+    parser.add_argument("-l", "--latest", action="store_true",
+                        help="Use latest dir inside 'logdir' (default: run for 'logdir')")
+    parser.add_argument('-e', '--episodes', type=int, default=TEST_EPISODES,
+                        help="Number of test episodes (default: 2500)")
+    parser.add_argument("-v", "--verbose", action="store_true",
+                        help="Print game boards (default: Don't print)")
+    parser.add_argument('-s', '--model_suffix', type=str, default="",
+                        help="Use a suffix for the model file e.g _best (default: )")
     args = parser.parse_args()
 
     log_dir = args.logdir
