@@ -17,12 +17,18 @@ from utils.rl_agent import RLAgent
 
 TEST_HEADER = ["Episodes", "FirstPlayer", "SecondPlayer",
                "Wins", "Draws", "Losses", "Invalids", "MeanReward",
-               "Score", "TrainEpisode", "TrainTime", "TrainStates",
+               "PartialScore", "Score", "TrainEpisode", "TrainTime", "TrainStates",
                "NewTestStates", "TotalTestStates", "NewEnvStates", "EnvAgentStates",
                "SumEnvStates", "TestTime", "TotalTestTime"]
 
 
 class AgentTestFramework:
+
+    # Weights for calculating average score
+    WIN_SCORE = 1
+    DRAW_SCORE_RANDOM = 0.5
+    LOSS_SCORE = -1
+    INVALID_SCORE = -2
 
     def __init__(self, test_agent, num_episodes, log_dir, out_file="test_outcomes.csv", verbose=False):
         self.test_agent = test_agent
@@ -39,11 +45,11 @@ class AgentTestFramework:
         self.res_minmax_first = []
         self.res_minmax_second = []
         self.res_self = []
-        self.current_score = 0
-        self.best_score = 0
+        self.current_score = None
+        self.best_score = self.INVALID_SCORE * 100
         self.current_idx = 0
-        self.best_score_idx = 0
-        self.best_train_episode = 0
+        self.best_score_idx = None
+        self.best_train_episode = None
         self.plot = None
         self.x_values = []
         self.scores = []
@@ -70,9 +76,9 @@ class AgentTestFramework:
         self.res_self.append(self.evaluate(self.test_agent, '-', self.n_self_episodes))
 
         # Calculate Score
-        # Average of wins vs random and draws vs minmax
-        self.current_score = self.res_random_first[-1][0] + self.res_random_second[-1][0] + \
-            self.res_minmax_first[-1][1] + self.res_minmax_second[-1][1]
+        # Average of the partial scores
+        self.current_score = self.res_random_first[-1][5] + self.res_random_second[-1][5] + \
+            self.res_minmax_first[-1][5] + self.res_minmax_second[-1][5]
 
         self.current_score /= 4
 
@@ -106,24 +112,24 @@ class AgentTestFramework:
         row_piece = [self.current_score, train_episode, train_time, train_states]
 
         rows.append([self.num_episodes, self.test_agent.name, self.random_agent_first.name]
-                    + self.res_random_first[-1][:5] + row_piece
-                    + self.res_random_first[-1][-4:] + [sum_env_states, self.res_random_first[-1][5],  test_time_h])
+                    + self.res_random_first[-1][:6] + row_piece
+                    + self.res_random_first[-1][-4:] + [sum_env_states, self.res_random_first[-1][6],  test_time_h])
 
         rows.append([self.num_episodes, self.random_agent_second.name, self.test_agent.name]
-                    + self.res_random_second[-1][:5] + row_piece
-                    + self.res_random_second[-1][-4:] + [sum_env_states, self.res_random_second[-1][5],  test_time_h])
+                    + self.res_random_second[-1][:6] + row_piece
+                    + self.res_random_second[-1][-4:] + [sum_env_states, self.res_random_second[-1][6],  test_time_h])
 
         rows.append([self.num_episodes, self.test_agent.name, self.minmax_agent_first.name]
-                    + self.res_minmax_first[-1][:5] + row_piece
-                    + self.res_minmax_first[-1][-4:] + [sum_env_states, self.res_minmax_first[-1][5],  test_time_h])
+                    + self.res_minmax_first[-1][:6] + row_piece
+                    + self.res_minmax_first[-1][-4:] + [sum_env_states, self.res_minmax_first[-1][6],  test_time_h])
 
         rows.append([self.num_episodes, self.minmax_agent_second.name, self.test_agent.name]
-                    + self.res_minmax_second[-1][:5] + row_piece
-                    + self.res_minmax_second[-1][-4:] + [sum_env_states, self.res_minmax_second[-1][5],  test_time_h])
+                    + self.res_minmax_second[-1][:6] + row_piece
+                    + self.res_minmax_second[-1][-4:] + [sum_env_states, self.res_minmax_second[-1][6],  test_time_h])
 
         rows.append([self.n_self_episodes, self.test_agent.name, self.test_agent.name]
-                    + self.res_self[-1][:5] + row_piece
-                    + self.res_self[-1][-4:] + [sum_env_states, self.res_self[-1][5],  test_time_h])
+                    + self.res_self[-1][:6] + row_piece
+                    + self.res_self[-1][-4:] + [sum_env_states, self.res_self[-1][6],  test_time_h])
 
         self.write_test_outcomes(rows)
 
@@ -159,31 +165,31 @@ class AgentTestFramework:
         if self.plot is None:
             fig1, ax1 = plt.subplots(figsize=FIG_SIZE)
             ax1.set_xlabel('Train Episode')
-            ax1.set_ylabel('Outcomes %')
+            ax1.set_ylabel('Score and Outcomes %')
 
-            line1, = ax1.plot(self.x_values, wins_random_first, 'blue')
-            line2, = ax1.plot(self.x_values, wins_random_second, 'cyan')
-            line3, = ax1.plot(self.x_values, draws_minmax_first, 'darkgreen')
-            line4, = ax1.plot(self.x_values, draws_minmax_second, 'mediumseagreen')
-            line5, = ax1.plot(self.x_values, self.scores, 'orangered')
+            line1, = ax1.plot(self.x_values, self.scores, 'orangered')
+            line2, = ax1.plot(self.x_values, wins_random_first, 'blue')
+            line3, = ax1.plot(self.x_values, wins_random_second, 'cyan')
+            line4, = ax1.plot(self.x_values, draws_minmax_first, 'darkgreen')
+            line5, = ax1.plot(self.x_values, draws_minmax_second, 'mediumseagreen')
 
             self.plot = (ax1, fig1, line1, line2, line3, line4, line5)
         else:
-            self.plot[2].set_data(self.x_values, wins_random_first)
-            self.plot[3].set_data(self.x_values, wins_random_second)
-            self.plot[4].set_data(self.x_values, draws_minmax_first)
-            self.plot[5].set_data(self.x_values, draws_minmax_second)
-            self.plot[6].set_data(self.x_values, self.scores)
+            self.plot[2].set_data(self.x_values, self.scores)
+            self.plot[3].set_data(self.x_values, wins_random_first)
+            self.plot[4].set_data(self.x_values, wins_random_second)
+            self.plot[5].set_data(self.x_values, draws_minmax_first)
+            self.plot[6].set_data(self.x_values, draws_minmax_second)
 
         self.plot[0].set_title("{} Test Outcomes | Best Score: {:5.2f} at Ep {}".format(self.test_agent.name,
                                                                                         self.best_score,
                                                                                         self.best_train_episode))
 
-        self.plot[2].set_label("WinsVsRandom1º| {:5.2f}".format(self.res_random_first[self.best_score_idx][0]))
-        self.plot[3].set_label("WinsVsRandom2º| {:5.2f}".format(self.res_random_second[self.best_score_idx][0]))
-        self.plot[4].set_label("DrawsVsMinMax1º| {:5.2f}".format(self.res_minmax_first[self.best_score_idx][1]))
-        self.plot[5].set_label("DrawsVsMinMax2º| {:5.2f}".format(self.res_minmax_second[self.best_score_idx][1]))
-        self.plot[6].set_label("Score (Average)| {:5.2f}".format(self.best_score))
+        self.plot[2].set_label("Score| Best: {:5.2f}".format(self.best_score))
+        self.plot[3].set_label("WinsVsRandom1º| {:5.2f}".format(self.res_random_first[self.best_score_idx][0]))
+        self.plot[4].set_label("WinsVsRandom2º| {:5.2f}".format(self.res_random_second[self.best_score_idx][0]))
+        self.plot[5].set_label("DrawsVsMinMax1º| {:5.2f}".format(self.res_minmax_first[self.best_score_idx][1]))
+        self.plot[6].set_label("DrawsVsMinMax2º| {:5.2f}".format(self.res_minmax_second[self.best_score_idx][1]))
 
         self.plot[0].relim()
         self.plot[0].autoscale_view(True, True, True)
@@ -295,13 +301,31 @@ class AgentTestFramework:
 
             self.all_board_states.append(board_states)
 
+        win_perc = win_count * 100.0 / n_episodes
+        draw_perc = draw_count * 100.0 / n_episodes
+        loss_perc = loss_count * 100.0 / n_episodes
+        invalid_perc = invalid_count * 100.0 / n_episodes
+
+        partial_score = None
+
+        if isinstance(env_agent, RandomAgent):
+            partial_score = self.WIN_SCORE * win_perc \
+                + self.DRAW_SCORE_RANDOM * draw_perc \
+                + self.LOSS_SCORE * loss_perc \
+                + self.INVALID_SCORE * invalid_perc
+        elif isinstance(env_agent, MinMaxAgent):
+            partial_score = self.WIN_SCORE * draw_perc \
+                + self.LOSS_SCORE * loss_perc \
+                + self.INVALID_SCORE * invalid_perc
+
         _, test_time_h = get_elapsed_time(time.time(), start_time)
 
-        return [win_count * 100.0 / n_episodes,
-                draw_count * 100.0 / n_episodes,
-                loss_count * 100.0 / n_episodes,
-                invalid_count * 100.0 / n_episodes,
+        return [win_perc,
+                draw_perc,
+                loss_perc,
+                invalid_perc,
                 float(mean_reward),
+                partial_score,
                 test_time_h,
                 new_states,
                 total_states,
