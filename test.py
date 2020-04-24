@@ -3,7 +3,7 @@ import argparse
 
 from utils.utils import filter_tf_warnings
 from utils.rl_agent import RLAgent
-from utils.test_utils import AgentTestFramework
+from utils.test_utils import AgentTestFramework, TEST_EPISODES
 
 
 def main():
@@ -14,7 +14,7 @@ def main():
                         help="use latest dir inside 'logdir'")
     parser.add_argument("-a", "--all", action="store_true",
                         help="run for all subdirs of 'logdir'")
-    parser.add_argument('-e', '--episodes', type=int, default=5000)
+    parser.add_argument('-e', '--episodes', type=int, default=TEST_EPISODES)
     parser.add_argument("-v", "--verbose", action="store_true")
     parser.add_argument('-s', '--model_suffix', type=str, default="")
     args = parser.parse_args()

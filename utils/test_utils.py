@@ -21,6 +21,8 @@ TEST_HEADER = ["Episodes", "FirstPlayer", "SecondPlayer",
                "NewTestStates", "TotalTestStates", "NewEnvStates", "EnvAgentStates",
                "SumEnvStates", "TestTime", "TotalTestTime"]
 
+TEST_EPISODES = 2500
+
 
 class AgentTestFramework:
 

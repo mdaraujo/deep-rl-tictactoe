@@ -16,7 +16,7 @@ from gym_tictactoe.envs.tictactoe_env import TicTacToeEnv
 
 from utils.utils import get_elapsed_time, FIG_SIZE
 from utils.rl_agent import RLAgent
-from utils.test_utils import AgentTestFramework
+from utils.test_utils import AgentTestFramework, TEST_EPISODES
 
 
 class PlotTestSaveCallback(object):
@@ -207,7 +207,7 @@ class PlotTestSaveCallback(object):
         # Update test agent
         if not self.test_agent:
             self.test_agent = RLAgent(self.log_dir, model=self.model)
-            self.test_framework = AgentTestFramework(self.test_agent, 3000, self.log_dir, verbose=False)
+            self.test_framework = AgentTestFramework(self.test_agent, TEST_EPISODES, self.log_dir, verbose=False)
         else:
             self.test_agent.model = self.model
 
