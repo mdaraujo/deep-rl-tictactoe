@@ -4,9 +4,9 @@ Deep Reinforcement Learning algorithms from Stable Baselines learn to play Tic-T
 
 The training agent always plays with X and the environment agent plays with O. The first player can be chosen, but by default it will be random, so the agent can learn to play in both player one and player two positions.
 
-The environment agent can be Random, MinMax, or the Self RL agent in which case the board will be symmetrically changed for X so the environment agent can play properly.
+The environment agent can be Random, MinMax, or the Self RL agent in which case the board will be symmetrically changed for X so the RL agent can play by the environment.
 
-The observation input can be the Row 9 positions array (Mlp), the One-hot encoded version (Mlp), or the 2D version (Cnn).
+The observation input can be the Raw 9 positions array (Mlp), the One-hot encoded version (Mlp), or the 2D version (Cnn).
 
 Any algorithm from Stable Baselines can be used, but currently the code only supports DQN and PPO2.
 
