@@ -5,7 +5,7 @@ from datetime import datetime
 from collections import OrderedDict
 
 from gym_tictactoe.envs.tictactoe_env import TicTacToeEnv
-from gym_tictactoe.agents.base import Agent, OBS_FORMAT_ONE_HOT, OBS_FORMAT_2D
+from gym_tictactoe.agents.base import Agent, OBS_FORMAT_RAW, OBS_FORMAT_ONE_HOT, OBS_FORMAT_2D, OBS_FORMAT_2D_FLAT
 from gym_tictactoe.agents.random_agent import RandomAgent
 from gym_tictactoe.agents.min_max_agent import MinMaxAgent
 
@@ -65,7 +65,7 @@ def train(alg, obs_format, env_agent: Agent, self_play: bool, train_episodes=100
     policy_network = "MlpPolicy"
     policy_kwargs = None
 
-    if obs_format == OBS_FORMAT_2D:
+    if obs_format == OBS_FORMAT_2D or obs_format == OBS_FORMAT_2D_FLAT:
         policy_network = "CnnPolicy"
         policy_kwargs = {'cnn_extractor': tic_tac_toe_cnn, 'cnn_arch': net_arch}
 
@@ -74,7 +74,8 @@ def train(alg, obs_format, env_agent: Agent, self_play: bool, train_episodes=100
         if not policy_kwargs:
             policy_kwargs = {'net_arch': net_arch}
 
-        model = alg(policy_network, train_env, gamma=gamma, policy_kwargs=policy_kwargs, verbose=0)
+        model = alg(policy_network, train_env, gamma=gamma,
+                    policy_kwargs=policy_kwargs, verbose=0)
 
     elif alg.__name__ == "DQN":
 
@@ -87,7 +88,7 @@ def train(alg, obs_format, env_agent: Agent, self_play: bool, train_episodes=100
     max_train_timesteps = train_episodes * 9
 
     with PlotTestSaveCallback(train_episodes, eval_freq, log_dir, alg.__name__, self_play, train_env) as callback:
-        model.learn(max_train_timesteps, callback=callback, log_interval=100)
+        model.learn(max_train_timesteps, callback=callback, log_interval=eval_freq)
 
 
 def main():

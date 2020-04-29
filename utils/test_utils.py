@@ -221,10 +221,16 @@ class AgentTestFramework:
         env = get_env(self.test_agent.obs_format, env_agent, player_one_char, self.test_agent.rewards)
 
         if isinstance(env_agent, RLAgent):
-            # print("env:", env.env)
-            # print("env id:", hex(id(env.env)))
+
+            if type(env) is TicTacToeEnv:
+                core_env = env
+            else:
+                core_env = env.env
+
+            # print("env:", core_env)
+            # print("env id:", hex(id(core_env)))
             # print("env.self_play = True")
-            env.env.self_play = True
+            core_env.self_play = True
 
         all_episode_rewards = []
         for episode in range(1, n_episodes + 1):

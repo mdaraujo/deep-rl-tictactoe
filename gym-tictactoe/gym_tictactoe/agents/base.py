@@ -4,7 +4,7 @@ from collections import OrderedDict
 OBS_FORMAT_RAW = "RAW"
 OBS_FORMAT_ONE_HOT = "ONE_HOT"
 OBS_FORMAT_2D = "2D"
-
+OBS_FORMAT_2D_FLAT = "2D_FLAT"
 
 class Agent(ABC):
 

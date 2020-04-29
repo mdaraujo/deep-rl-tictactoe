@@ -5,7 +5,7 @@ from gym import error, spaces, utils
 from gym.utils import seeding
 from stable_baselines.common.env_checker import check_env
 
-from gym_tictactoe.agents.base import OBS_FORMAT_ONE_HOT, OBS_FORMAT_2D
+from gym_tictactoe.agents.base import OBS_FORMAT_ONE_HOT, OBS_FORMAT_2D, OBS_FORMAT_2D_FLAT
 from gym_tictactoe.agents.random_agent import RandomAgent
 
 
@@ -138,6 +138,8 @@ class TicTacToeEnv(gym.Env):
                 board_copy = ObsRawToOneHot.get_one_hot_obs(board_copy)
             elif self.naught_agent.obs_format == OBS_FORMAT_2D:
                 board_copy = ObsRawTo2D.get_2d_obs(board_copy)
+            elif self.naught_agent.obs_format == OBS_FORMAT_2D_FLAT:
+                board_copy = ObsRawTo2DFlat.get_2d_flat_obs(board_copy)
 
         action = self.naught_agent.play(board_copy)
 
@@ -250,7 +252,7 @@ class ObsRawTo2D(gym.ObservationWrapper):
             observation_space, gym.spaces.Box), "This wrapper only works with continuous observation space (spaces.Box)"
 
         self.observation_space = spaces.Box(low=0, high=255,
-                                            shape=ObsRawTo2D.SHAPE,
+                                            shape=self.SHAPE,
                                             dtype=np.uint8)
 
     def observation(self, obs):
@@ -268,9 +270,42 @@ class ObsRawTo2D(gym.ObservationWrapper):
         return new_obs
 
 
+class ObsRawTo2DFlat(gym.ObservationWrapper):
+
+    SHAPE = (1,
+             TicTacToeEnv.BOARD_LENGTH,
+             TicTacToeEnv.BOARD_LENGTH)
+
+    def __init__(self, env):
+        super().__init__(env)
+
+        observation_space = env.observation_space
+
+        assert isinstance(
+            observation_space, gym.spaces.Box), "This wrapper only works with continuous observation space (spaces.Box)"
+
+        self.observation_space = spaces.Box(low=0, high=255,
+                                            shape=self.SHAPE,
+                                            dtype=np.uint8)
+
+    def observation(self, obs):
+        return self.get_2d_flat_obs(obs)
+
+    @staticmethod
+    def get_2d_flat_obs(obs):
+        new_obs = np.zeros(ObsRawTo2DFlat.SHAPE, dtype=np.int)
+
+        for i, state in enumerate(obs):
+            y = int(i / TicTacToeEnv.BOARD_LENGTH)
+            x = i - y * TicTacToeEnv.BOARD_LENGTH
+            new_obs[0][y][x] = state * 127
+
+        return new_obs
+
+
 if __name__ == "__main__":
-    env = TicTacToeEnv(RandomAgent(), player_one_char='O')
-    env = ObsRawTo2D(env)
+    env = TicTacToeEnv(RandomAgent(), player_one_char='-')
+    env = ObsRawTo2DFlat(env)
     print("Checking environment...")
     check_env(env, warn=True)
 

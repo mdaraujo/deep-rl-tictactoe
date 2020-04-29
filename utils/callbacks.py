@@ -241,7 +241,11 @@ class PlotTestSaveCallback(object):
 
                 if 'DQN' in globals_:
 
-                    env = self.env.env.env
+                    if type(self.env.env) is TicTacToeEnv:
+                        env = self.env.env
+                    else:
+                        env = self.env.env.env
+
                     envs.append(env)
 
                 elif 'PPO2' in globals_:
@@ -250,7 +254,11 @@ class PlotTestSaveCallback(object):
                     # print("runner.env.num_envs:", runner.env.num_envs)
 
                     for env in runner.env.envs:
-                        envs.append(env.env.env)
+
+                        if type(env.env) is TicTacToeEnv:
+                            envs.append(env.env)
+                        else:
+                            envs.append(env.env.env)
 
                 self.env_agent = RLAgent(self.log_dir, model=self.model, deterministic=False)
 
@@ -258,9 +266,9 @@ class PlotTestSaveCallback(object):
                     env.self_play = True
                     env.naught_agent = self.env_agent
 
-                #     print("env:", env)
-                #     print("env id:", hex(id(env)))
-                #     print("naught_agent id:", hex(id(env.naught_agent)))
+                    # print("env:", env)
+                    # print("env id:", hex(id(env)))
+                    # print("naught_agent id:", hex(id(env.naught_agent)))
 
                 # print("env_agent id:", hex(id(self.env_agent)))
                 # print()

@@ -8,8 +8,8 @@ from stable_baselines import PPO2, DQN
 from stable_baselines.bench import Monitor
 from stable_baselines.common.vec_env import DummyVecEnv, SubprocVecEnv
 
-from gym_tictactoe.envs.tictactoe_env import TicTacToeEnv, ObsRawToOneHot, ObsRawTo2D
-from gym_tictactoe.agents.base import Agent, OBS_FORMAT_ONE_HOT, OBS_FORMAT_2D
+from gym_tictactoe.envs.tictactoe_env import TicTacToeEnv, ObsRawToOneHot, ObsRawTo2D, ObsRawTo2DFlat
+from gym_tictactoe.agents.base import Agent, OBS_FORMAT_ONE_HOT, OBS_FORMAT_2D, OBS_FORMAT_2D_FLAT
 
 FIG_SIZE = (10, 5)
 
@@ -34,11 +34,16 @@ def get_env(obs_format, env_agent: Agent, player_one_char, rewards=None, env_exp
 
     env = TicTacToeEnv(**env_kwargs)
 
+    wrapper_class = None
+
     if obs_format == OBS_FORMAT_ONE_HOT:
         wrapper_class = ObsRawToOneHot
         env = wrapper_class(env)
     elif obs_format == OBS_FORMAT_2D:
         wrapper_class = ObsRawTo2D
+        env = wrapper_class(env)
+    elif obs_format == OBS_FORMAT_2D_FLAT:
+        wrapper_class = ObsRawTo2DFlat
         env = wrapper_class(env)
 
     if monitor:
