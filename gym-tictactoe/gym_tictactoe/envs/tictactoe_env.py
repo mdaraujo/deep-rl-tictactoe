@@ -43,12 +43,12 @@ class TicTacToeEnv(gym.Env):
 
         self.current_player_one = self.player_one
 
-        self.board = np.zeros((self.SIZE,), dtype=np.int)
+        self.board = np.zeros((self.SIZE,), dtype=np.uint8)
 
         self.action_space = spaces.Discrete(self.SIZE)
 
         self.observation_space = spaces.Box(low=self.EMPTY, high=self.NAUGHT,
-                                            shape=(self.SIZE,), dtype=np.int)
+                                            shape=(self.SIZE,), dtype=np.uint8)
 
         self.env_exploration_rate = env_exploration_rate
 
@@ -149,7 +149,7 @@ class TicTacToeEnv(gym.Env):
         return action
 
     def reset(self):
-        self.board = np.zeros((self.SIZE,), dtype=int)
+        self.board = np.zeros((self.SIZE,), dtype=np.uint8)
 
         self.current_player_one = self.player_one
 
@@ -224,14 +224,14 @@ class ObsRawToOneHot(gym.ObservationWrapper):
         assert isinstance(
             observation_space, gym.spaces.Box), "This wrapper only works with continuous observation space (spaces.Box)"
 
-        self.observation_space = gym.spaces.Box(0, 1, (self.N,), dtype=np.int)
+        self.observation_space = gym.spaces.Box(0, 1, (self.N,), dtype=np.uint8)
 
     def observation(self, obs):
         return self.get_one_hot_obs(obs)
 
     @staticmethod
     def get_one_hot_obs(obs):
-        new_obs = np.zeros(ObsRawToOneHot.N, dtype=np.int)
+        new_obs = np.zeros(ObsRawToOneHot.N, dtype=np.uint8)
         for i, state in enumerate(obs):
             new_obs[i + (state * TicTacToeEnv.SIZE)] = 1
         return new_obs
@@ -260,7 +260,7 @@ class ObsRawTo2D(gym.ObservationWrapper):
 
     @staticmethod
     def get_2d_obs(obs):
-        new_obs = np.zeros(ObsRawTo2D.SHAPE, dtype=np.int)
+        new_obs = np.zeros(ObsRawTo2D.SHAPE, dtype=np.uint8)
 
         for i, state in enumerate(obs):
             y = int(i / TicTacToeEnv.BOARD_LENGTH)
@@ -293,7 +293,7 @@ class ObsRawTo2DFlat(gym.ObservationWrapper):
 
     @staticmethod
     def get_2d_flat_obs(obs):
-        new_obs = np.zeros(ObsRawTo2DFlat.SHAPE, dtype=np.int)
+        new_obs = np.zeros(ObsRawTo2DFlat.SHAPE, dtype=np.uint8)
 
         for i, state in enumerate(obs):
             y = int(i / TicTacToeEnv.BOARD_LENGTH)
