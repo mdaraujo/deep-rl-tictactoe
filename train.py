@@ -5,7 +5,7 @@ from datetime import datetime
 from collections import OrderedDict
 
 from gym_tictactoe.envs.tictactoe_env import TicTacToeEnv
-from gym_tictactoe.agents.base import Agent, OBS_FORMAT_RAW, OBS_FORMAT_ONE_HOT, OBS_FORMAT_2D, OBS_FORMAT_2D_FLAT
+from gym_tictactoe.agents.base import Agent, OBS_FORMAT_ONE_HOT, OBS_FORMAT_2D, OBS_FORMAT_2D_FLAT
 from gym_tictactoe.agents.random_agent import RandomAgent
 from gym_tictactoe.agents.min_max_agent import MinMaxAgent
 
@@ -14,7 +14,10 @@ from utils.callbacks import PlotTestSaveCallback
 from utils.cnn_extractor import tic_tac_toe_cnn
 
 
-def train(alg, obs_format, env_agent: Agent, self_play: bool, train_episodes=10000, eval_freq=1000, player_one_char='-', gamma=1.0, net_arch=[256, 256, 512], rewards=TicTacToeEnv.DEFAULT_REWARDS, env_exploration_rate=0.0, n_envs=1):
+def train(alg, obs_format, env_agent: Agent, self_play: bool,
+          train_episodes=10000, eval_freq=1000, player_one_char='-',
+          gamma=1.0, net_arch=[256, 256, 512], rewards=TicTacToeEnv.DEFAULT_REWARDS,
+          env_exploration_rate=0.0, n_envs=1, tensorboard_log=None):
 
     now = datetime.now()
 
@@ -74,16 +77,16 @@ def train(alg, obs_format, env_agent: Agent, self_play: bool, train_episodes=100
         if not policy_kwargs:
             policy_kwargs = {'net_arch': net_arch}
 
-        model = alg(policy_network, train_env, gamma=gamma,
-                    policy_kwargs=policy_kwargs, verbose=0)
+        model = alg(policy_network, train_env, gamma=gamma, policy_kwargs=policy_kwargs,
+                    tensorboard_log=tensorboard_log, verbose=0)
 
     elif alg.__name__ == "DQN":
 
         if not policy_kwargs:
             policy_kwargs = {'layers': net_arch}
 
-        model = alg(policy_network, train_env, gamma=gamma,
-                    policy_kwargs=policy_kwargs, prioritized_replay=True, verbose=0)
+        model = alg(policy_network, train_env, gamma=gamma, policy_kwargs=policy_kwargs,
+                    prioritized_replay=True, tensorboard_log=tensorboard_log, verbose=0)
 
     max_train_timesteps = train_episodes * 9
 
@@ -100,6 +103,8 @@ def main():
                         help='Training Episodes (default: 10000)')
     parser.add_argument('-f', '--freq', type=int, default=1000,
                         help='Evaluation Frequency (default: 1000)')
+    parser.add_argument("-tb", "--tensorboard", default=None,
+                        help="Tensorboard logdir. (default: None)")
     parser.add_argument('-p', '--player_one', type=str, default='-',
                         help='X for the agent, O for the environment, or - for randomly choosing in each train episode (default: -)')
     parser.add_argument('-g', '--gamma', type=float, default=1.0,
@@ -139,7 +144,8 @@ def main():
     filter_tf_warnings()
 
     train(alg, obs_format, env_agent, self_play, train_episodes=args.episodes,
-          eval_freq=args.freq, player_one_char=args.player_one, gamma=args.gamma, n_envs=args.n_envs)
+          eval_freq=args.freq, player_one_char=args.player_one, gamma=args.gamma,
+          n_envs=args.n_envs, tensorboard_log=args.tensorboard)
 
 
 if __name__ == "__main__":
