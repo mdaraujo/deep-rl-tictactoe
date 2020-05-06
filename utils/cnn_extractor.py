@@ -18,7 +18,8 @@ def tic_tac_toe_cnn(scaled_images, **kwargs):
 
     for i, f in enumerate(net_arch[:-1], start=1):
         # print('c' + str(i), f)
-        layer = activ(conv(layer, 'c' + str(i), n_filters=f, filter_size=3, stride=1, pad='SAME'))
+        layer = activ(conv(layer, 'c' + str(i), n_filters=f, filter_size=3,
+                           stride=1, pad='SAME', data_format='NCHW'))
 
     layer = conv_to_fc(layer)
 
