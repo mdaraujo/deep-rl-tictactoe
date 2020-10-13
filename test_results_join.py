@@ -29,7 +29,7 @@ def main():
 
     for sub_dir in all_subdirs:
 
-        if not sub_dir[-1].isdigit():
+        if sub_dir.count('_') < 5:
             print("\n", sub_dir)
             count = 0
             results_list.append(pd.DataFrame({'Episodes': ['', sub_dir, '', '']}))
