@@ -16,7 +16,7 @@ from utils.cnn_extractor import tic_tac_toe_cnn
 
 def train(alg, obs_format, env_agent: Agent, self_play: bool,
           train_episodes=10000, eval_freq=1000, player_one_char='-',
-          gamma=1.0, net_arch=[64, 128], filter_size=2, pad='VALID',
+          gamma=1.0, net_arch=[64, 128], filter_size=3, pad='SAME',
           rewards=TicTacToeEnv.DEFAULT_REWARDS, env_exploration_rate=0.0,
           n_envs=1, tensorboard_log=None):
 
@@ -29,6 +29,10 @@ def train(alg, obs_format, env_agent: Agent, self_play: bool,
 
     if alg.__name__ == "DQN":
         n_envs = 1
+
+    if obs_format != OBS_FORMAT_2D and obs_format != OBS_FORMAT_2D_FLAT:
+        filter_size = 0
+        pad = 0
 
     params = OrderedDict()
     params['alg'] = alg.__name__
