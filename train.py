@@ -16,8 +16,9 @@ from utils.cnn_extractor import tic_tac_toe_cnn
 
 def train(alg, obs_format, env_agent: Agent, self_play: bool,
           train_episodes=10000, eval_freq=1000, player_one_char='-',
-          gamma=1.0, net_arch=[256, 256, 512], rewards=TicTacToeEnv.DEFAULT_REWARDS,
-          env_exploration_rate=0.0, n_envs=1, tensorboard_log=None):
+          gamma=1.0, net_arch=[64, 128], filter_size=2, pad='VALID',
+          rewards=TicTacToeEnv.DEFAULT_REWARDS, env_exploration_rate=0.0,
+          n_envs=1, tensorboard_log=None):
 
     now = datetime.now()
 
@@ -39,6 +40,8 @@ def train(alg, obs_format, env_agent: Agent, self_play: bool,
     params['n_envs'] = n_envs
     params['gamma'] = gamma
     params['net_arch'] = net_arch
+    params['filter_size'] = filter_size
+    params['pad'] = pad
     params['r_win'] = rewards[0]
     params['r_draw'] = rewards[1]
     params['r_still_playing'] = rewards[2]
@@ -51,11 +54,11 @@ def train(alg, obs_format, env_agent: Agent, self_play: bool,
 
     # rewards_str = '-'.join([str(elem) for elem in rewards])
 
-    log_dir = "logs/{}_{}/{}_{}_{}_{}_{}_{}_{}".format(alg.__name__, env_agent_name,
-                                                       now.strftime('%y%m%d-%H%M%S'),
-                                                       train_episodes, obs_format,
-                                                       env_exploration_rate, n_envs,
-                                                       gamma, net_arch_str)
+    log_dir = "logs/{}_{}/{}_{}_{}_{}_{}_{}_{}_{}_{}".format(alg.__name__, env_agent_name,
+                                                             now.strftime('%y%m%d-%H%M%S'),
+                                                             train_episodes, obs_format,
+                                                             env_exploration_rate, n_envs,
+                                                             gamma, net_arch_str, filter_size, pad)
     os.makedirs(log_dir, exist_ok=True)
     print("\nLog dir:", log_dir)
 
@@ -70,7 +73,8 @@ def train(alg, obs_format, env_agent: Agent, self_play: bool,
 
     if obs_format == OBS_FORMAT_2D or obs_format == OBS_FORMAT_2D_FLAT:
         policy_network = "CnnPolicy"
-        policy_kwargs = {'cnn_extractor': tic_tac_toe_cnn, 'cnn_arch': net_arch}
+        policy_kwargs = {'cnn_extractor': tic_tac_toe_cnn, 'cnn_arch': net_arch,
+                         'filter_size': filter_size, 'pad': pad}
 
     if alg.__name__ == "PPO2":
 
@@ -101,8 +105,8 @@ def main():
                         help='Algorithm name. PPO2 or DQN (default: DQN)')
     parser.add_argument('-e', '--episodes', type=int, default=10000,
                         help='Training Episodes (default: 10000)')
-    parser.add_argument('-f', '--freq', type=int, default=1000,
-                        help='Evaluation Frequency (default: 1000)')
+    parser.add_argument('-f', '--freq', type=int, default=2000,
+                        help='Evaluation Frequency (default: 2000)')
     parser.add_argument("-tb", "--tensorboard", default=None,
                         help="Tensorboard logdir. (default: None)")
     parser.add_argument('-p', '--player_one', type=str, default='-',

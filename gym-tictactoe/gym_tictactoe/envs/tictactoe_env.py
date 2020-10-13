@@ -305,7 +305,7 @@ class ObsRawTo2DFlat(gym.ObservationWrapper):
 
 if __name__ == "__main__":
     env = TicTacToeEnv(RandomAgent(), player_one_char='-')
-    env = ObsRawTo2DFlat(env)
+    env = ObsRawTo2D(env)
     print("Checking environment...")
     check_env(env, warn=True)
 
