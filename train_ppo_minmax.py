@@ -4,7 +4,7 @@ from gym_tictactoe.envs.tictactoe_env import TicTacToeEnv
 from gym_tictactoe.agents.min_max_agent import MinMaxAgent
 from gym_tictactoe.agents.random_agent import RandomAgent
 
-from utils.hyperparams import P_CHAR, REWARDS, N_REPEATS, ENV_EXP, NET_ARCH, OBS_FORMAT
+from utils.hyperparams import P_CHAR, REWARDS, N_REPEATS, ENV_EXP, NET_ARCH, OBS_FORMAT, FILTER_SIZES, PADS
 from utils.utils import filter_tf_warnings
 
 from train import train
@@ -18,9 +18,9 @@ ENV_AGENT = MinMaxAgent()
 
 SELF_PLAY = False
 
-TRAIN_EPISODES = 120000
+TRAIN_EPISODES = 250000
 
-EVAL_FREQ = [12000]
+EVAL_FREQ = [50000]
 
 # invalid_rewards = [2, 1, 0, -1, -10]
 
@@ -33,7 +33,8 @@ GAMMA = [1.0]
 N_ENVS = 8
 
 total_trainings = len(OBS_FORMAT) * len(REWARDS) * len(GAMMA) * \
-    len(ENV_EXP) * len(NET_ARCH) * len(EVAL_FREQ) * N_REPEATS
+    len(ENV_EXP) * len(NET_ARCH) * len(FILTER_SIZES) * len(PADS) * \
+    len(EVAL_FREQ) * N_REPEATS
 
 count = 0
 
@@ -43,10 +44,13 @@ for obs_format in OBS_FORMAT:
             for rewards in REWARDS:
                 for env_exp in ENV_EXP:
                     for net_arch in NET_ARCH:
-                        for _ in range(N_REPEATS):
+                        for filter_size in FILTER_SIZES:
+                            for pad in PADS:
+                                for _ in range(N_REPEATS):
 
-                            count += 1
-                            print("\n\nTraining {} / {}".format(count, total_trainings))
+                                    count += 1
+                                    print("\n\nTraining {} / {}".format(count, total_trainings))
 
-                            train(ALG, obs_format, ENV_AGENT, SELF_PLAY, TRAIN_EPISODES,
-                                  eval_freq, P_CHAR, gamma, net_arch, rewards, env_exp, N_ENVS)
+                                    train(ALG, obs_format, ENV_AGENT, SELF_PLAY, TRAIN_EPISODES,
+                                          eval_freq, P_CHAR, gamma, net_arch, filter_size, pad,
+                                          rewards, env_exp, N_ENVS)
