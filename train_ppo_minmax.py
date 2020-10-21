@@ -18,15 +18,15 @@ ENV_AGENT = MinMaxAgent()
 
 SELF_PLAY = False
 
-TRAIN_EPISODES = 250000
+TRAIN_EPISODES = 500000
 
-EVAL_FREQ = [50000]
+EVAL_FREQ = [100000]
 
 # invalid_rewards = [2, 1, 0, -1, -10]
 
 P_CHAR = '-'
 
-GAMMA = [1.0]
+GAMMA = [0.99]
 
 # ENV_EXP = [0.2]
 
