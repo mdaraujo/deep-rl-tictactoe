@@ -18,7 +18,7 @@ P_CHAR = '-'
 
 GAMMA = [0.99]
 
-ENV_EXP = [0.2]
+ENV_EXP = [0.0]
 
 # ENV_EXP = [0.0, 0.2, 0.5, 1.0]
 
