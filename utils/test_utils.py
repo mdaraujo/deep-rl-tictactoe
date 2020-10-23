@@ -193,6 +193,8 @@ class AgentTestFramework:
         self.plot[5].set_label("DrawsVsMinMax1º| {:5.2f}".format(self.res_minmax_first[self.best_score_idx][1]))
         self.plot[6].set_label("DrawsVsMinMax2º| {:5.2f}".format(self.res_minmax_second[self.best_score_idx][1]))
 
+        self.plot[0].set_xticks(self.x_values)
+        self.plot[0].set_xticklabels(self.x_values)
         self.plot[0].relim()
         self.plot[0].autoscale_view(True, True, True)
         self.plot[0].legend(loc='best', shadow=True, fancybox=True, framealpha=0.7)

@@ -341,6 +341,8 @@ class PlotTestSaveCallback(object):
             self.plot_mr[0].set_data(self.x_values, self.mean_rewards)
 
         self.plot_mr[1].set_title("{} | Best: {:5.2f}".format(self.plot_mr_title, self.best_mean_reward))
+        self.plot_mr[1].set_xticks(self.x_values)
+        self.plot_mr[1].set_xticklabels(self.x_values)
         self.plot_mr[1].relim()
         self.plot_mr[1].autoscale_view(True, True, True)
         self.plot_mr[2].tight_layout()
@@ -367,6 +369,8 @@ class PlotTestSaveCallback(object):
             self.plot_outcomes[2].set_data(self.x_values, self.losses_perc)
             self.plot_outcomes[3].set_data(self.x_values, self.invalids_perc)
 
+        self.plot_outcomes[4].set_xticks(self.x_values)
+        self.plot_outcomes[4].set_xticklabels(self.x_values)
         self.plot_outcomes[4].relim()
         self.plot_outcomes[4].autoscale_view(True, True, True)
         self.plot_outcomes[4].legend(loc='best', shadow=True, fancybox=True, framealpha=0.7)
@@ -433,6 +437,9 @@ class PlotTestSaveCallback(object):
 
         self.plot_states[1].set_title("{} | Max: {} at Ep {}".format(
             self.plot_board_states_title, self.n_states_history[-1], self.max_n_states_episode))
+
+        self.plot_states[1].set_xticks(self.x_values)
+        self.plot_states[1].set_xticklabels(self.x_values)
         self.plot_states[1].relim()
         self.plot_states[1].autoscale_view(True, True, True)
         self.plot_states[2].tight_layout()
