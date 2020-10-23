@@ -66,7 +66,7 @@ class PlotTestSaveCallback(object):
 
             self.env_exploration_rate = params["env_exploration_rate"]
 
-            self.plot_mr_title = "{} Training Mean Rewards Vs {}".format(
+            self.plot_mr_title = "{} Training Mean Returns Vs {}".format(
                 self.alg_name, self.env_agent_name)
 
             self.plot_outcomes_title = "{} Training Outcomes Vs {}".format(
@@ -333,7 +333,7 @@ class PlotTestSaveCallback(object):
         if self.plot_mr is None:
             fig1, ax1 = plt.subplots(figsize=FIG_SIZE)
             ax1.set_xlabel('Number of Episodes')
-            ax1.set_ylabel('Mean {} Episode Reward'.format(self.eval_freq))
+            ax1.set_ylabel('Mean {} Episode Return'.format(self.eval_freq))
 
             line, = ax1.plot(self.x_values, self.mean_rewards)
             self.plot_mr = (line, ax1, fig1)
@@ -348,7 +348,7 @@ class PlotTestSaveCallback(object):
         self.plot_mr[2].tight_layout()
         self.plot_mr[2].canvas.draw()
 
-        self.plot_mr[2].savefig("{}/train_rewards_{}.png".format(self.log_dir, self.alg_name))
+        self.plot_mr[2].savefig("{}/train_returns_{}.png".format(self.log_dir, self.alg_name))
 
     def plot_train_outcomes(self):
 
