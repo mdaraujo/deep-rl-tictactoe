@@ -91,10 +91,12 @@ def train(alg, obs_format, env_agent: Agent, self_play: bool,
     elif alg.__name__ == "DQN":
 
         if not policy_kwargs:
-            policy_kwargs = {'layers': net_arch}
+            policy_kwargs = {'layers': net_arch, 'dueling': False}
+        else:
+            policy_kwargs['dueling'] = False
 
         model = alg(policy_network, train_env, gamma=gamma, policy_kwargs=policy_kwargs,
-                    prioritized_replay=True, tensorboard_log=tensorboard_log, verbose=0)
+                    prioritized_replay=False, double_q=False, tensorboard_log=tensorboard_log, verbose=0)
 
     max_train_timesteps = train_episodes * 9
 
