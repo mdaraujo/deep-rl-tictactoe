@@ -1,6 +1,8 @@
 import os
 import argparse
+import json
 from datetime import datetime
+from collections import OrderedDict
 
 from gym_tictactoe.envs.tictactoe_env import TicTacToeEnv
 from gym_tictactoe.agents.random_agent import RandomAgent
@@ -27,6 +29,14 @@ if __name__ == "__main__":
         os.makedirs(log_dir, exist_ok=True)
 
         print("\nlog_dir:", log_dir)
+
+        params = OrderedDict()
+        params['agent'] = agent.name
+        params['num_episodes'] = args.episodes
+        params['datetime'] = now.replace(microsecond=0).isoformat()
+
+        with open(log_dir + "/params.json", "w") as f:
+            json.dump(params, f, indent=4)
 
         test_framework = AgentTestFramework(agent, args.episodes, log_dir, verbose=args.verbose)
         test_framework.test()
