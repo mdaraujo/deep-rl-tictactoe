@@ -4,7 +4,7 @@ from gym_tictactoe.envs.tictactoe_env import TicTacToeEnv
 from gym_tictactoe.agents.min_max_agent import MinMaxAgent
 from gym_tictactoe.agents.random_agent import RandomAgent
 
-from utils.hyperparams import P_CHAR, REWARDS, N_REPEATS, ENV_EXP, NET_ARCH, OBS_FORMAT, FILTER_SIZES, PADS
+from utils.hyperparams import P_CHAR, REWARDS, N_REPEATS, ENV_EXP, NET_ARCH, OBS_FORMAT, FILTER_SIZES, PADS, GAMMA
 from utils.utils import filter_tf_warnings
 
 from train import train
@@ -25,8 +25,6 @@ EVAL_FREQ = [100000]
 # invalid_rewards = [2, 1, 0, -1, -10]
 
 P_CHAR = '-'
-
-GAMMA = [0.99]
 
 # ENV_EXP = [0.2]
 
