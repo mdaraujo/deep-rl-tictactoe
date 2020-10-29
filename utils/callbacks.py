@@ -7,6 +7,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+plt.rc('font', size=11)
+
 from collections import OrderedDict
 from tqdm.auto import tqdm
 from stable_baselines.common.vec_env import DummyVecEnv

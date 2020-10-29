@@ -20,7 +20,7 @@ SELF_PLAY = False
 
 TRAIN_EPISODES = 500000
 
-EVAL_FREQ = [100000]
+EVAL_FREQ = [int(TRAIN_EPISODES / 10)]
 
 # invalid_rewards = [2, 1, 0, -1, -10]
 
