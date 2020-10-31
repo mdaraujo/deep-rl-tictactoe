@@ -29,7 +29,7 @@ def main():
 
     for sub_dir in all_subdirs:
 
-        if sub_dir.count('_') < 5:
+        if sub_dir.count('_') < 6:
             print("\n", sub_dir)
             count = 0
             results_list.append(pd.DataFrame({'Episodes': ['', sub_dir, '', '']}))
@@ -75,7 +75,14 @@ def main():
             avg_score += df['Score'][0]
             avg_score /= n_repeats
 
-            df = df.append({'Score': avg_score}, ignore_index=True)
+            # Calculate variance
+            variance = 0
+            for i in range(1, n_repeats):
+                variance += (avg_score - results_list[-i]['Score'][0]) ** 2
+            variance += (avg_score - df['Score'][0]) ** 2
+            variance /= n_repeats
+
+            df = df.append({'Score': avg_score, 'TrainEpisode': variance}, ignore_index=True)
 
             # Add another empty line
             df = df.append(pd.Series(), ignore_index=True)
