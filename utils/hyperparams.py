@@ -12,7 +12,7 @@ base_rewards = [2, 1, 0, -2, -3]
 
 REWARDS = [TicTacToeEnv.DEFAULT_REWARDS]
 
-OBS_FORMAT = [OBS_FORMAT_ONE_HOT, OBS_FORMAT_RAW]
+OBS_FORMAT = [OBS_FORMAT_ONE_HOT, OBS_FORMAT_2D]
 
 P_CHAR = '-'
 
@@ -22,7 +22,9 @@ ENV_EXP = [0.0]
 
 # ENV_EXP = [0.0, 0.2, 0.5, 1.0]
 
-NET_ARCH = [[32, 32], [16, 16]]
+NET_ARCH = [[32, 32]]
+
+NET_ARCH_2D = [[64, 32, 32]]
 
 # NET_ARCH = [[512, 512], [256, 256, 512], [512, 128, 256], [256, 256, 128, 256]]
 
