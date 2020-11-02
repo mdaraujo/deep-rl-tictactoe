@@ -33,13 +33,39 @@ if __name__ == "__main__":
 
     # print_t_test("Example:", rvs1, rvs2)
 
-    one_hot_32_32_g_0_99 = [39.33, 58.64, 47.75, 50.17, 52.67]
-    one_hot_32_32_g_1 = [55.23, 46.13, 32.66, 61.54, 21.9]
+    oh_32_g_0_99 = [39.33, 58.64, 47.75, 50.17, 52.67]
+    oh_32_g_1 = [55.23, 46.13, 32.66, 61.54, 21.9]
 
-    print_t_test("Gamma 0.99 vs 1:", one_hot_32_32_g_0_99, one_hot_32_32_g_1)
+    print_t_test("DQN Random - Gamma 0.99 vs 1:", oh_32_g_0_99, oh_32_g_1)
 
     ###
+
+    oh_32_g_0_99_dddqn = [75.48, 75.46, 62.99, 86.45, 74.96]
+    oh_32_g_1_dddqn = [76.23, 84.42, 73.6, 66.95, 82.0]
+
+    print_t_test("DDDQN PER Random - Gamma 0.99 vs 1:", oh_32_g_0_99_dddqn, oh_32_g_1_dddqn)
+
+    ###
+
+    minmax_oh_g_0_99_dddqn = [82.52, 82.58, 83.52, 83.25, 79.54]
+    minmax_oh_g_1_dddqn = [82.49, 79.5, 79.78, 84.59, 76.94]
+
+    print_t_test("DDDQN PER Minmax OneHot - Gamma 0.99 vs 1:", minmax_oh_g_0_99_dddqn, minmax_oh_g_1_dddqn)
+
+    ###
+
+    minmax_2d_g_0_99_dddqn = [84.62, 83.75, 86.42, 83.96, 83.93]
+    minmax_2d_g_1_dddqn = [85.48, 86.03, 85.1, 84.51, 85.21]
+
+    print_t_test("DDDQN PER Minmax 2D - Gamma 0.99 vs 1:", minmax_2d_g_0_99_dddqn, minmax_2d_g_1_dddqn)
+
+    ###
+    raw_16 = [-24.14, -61.53, -45.97, -23.16, -81.05]
     oh_16 = [30.52, 22.81, 18.4, 7.73, 26.52]
+
+    print_t_test("Raw vs OneHot dqn:", raw_16, oh_16)
+
+    ###
     oh_32 = [55.23, 46.13, 32.66, 61.54, 21.9]
 
     print_t_test("16 vs 32 dqn:", oh_16, oh_32)
