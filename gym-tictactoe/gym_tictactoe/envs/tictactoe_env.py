@@ -319,6 +319,8 @@ if __name__ == "__main__":
     obs = env.reset()
     done = False
 
+    step = 1
+
     while not done:
         print("Available actions:", env.available_actions())
 
@@ -330,10 +332,11 @@ if __name__ == "__main__":
         if 'naught_action' in info:
             naught_action = info['naught_action']
 
-        print("CROSS: {:2d} | NAUGHT: {:2d} | Reward: {:.0f} | Done: {}".format(
-            action, naught_action, reward, done))
+        print("{:2d} - CROSS: {:2d} | NAUGHT: {:2d} | Reward: {:.0f} | Done: {}".format(
+            step, action, naught_action, reward, done))
 
         print(obs)
 
         env.render()
+        step += 1
         print()

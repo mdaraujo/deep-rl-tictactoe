@@ -12,11 +12,11 @@ base_rewards = [2, 1, 0, -2, -3]
 
 REWARDS = [TicTacToeEnv.DEFAULT_REWARDS]
 
-OBS_FORMAT = [OBS_FORMAT_ONE_HOT, OBS_FORMAT_2D]
+OBS_FORMAT = [OBS_FORMAT_2D]
 
 P_CHAR = '-'
 
-GAMMA = [0.99, 1.0]
+GAMMA = [1.0]
 
 ENV_EXP = [0.0]
 

@@ -4,7 +4,7 @@ from gym_tictactoe.envs.tictactoe_env import TicTacToeEnv, OBS_FORMAT_2D
 from gym_tictactoe.agents.min_max_agent import MinMaxAgent
 from gym_tictactoe.agents.random_agent import RandomAgent
 
-from utils.hyperparams import P_CHAR, REWARDS, N_REPEATS, ENV_EXP, NET_ARCH, OBS_FORMAT, FILTER_SIZES, PADS, GAMMA
+from utils.hyperparams import P_CHAR, REWARDS, N_REPEATS, NET_ARCH, OBS_FORMAT, FILTER_SIZES, PADS, GAMMA
 from utils.hyperparams import NET_ARCH_2D
 from utils.utils import filter_tf_warnings
 
@@ -25,7 +25,7 @@ EVAL_FREQ = [int(TRAIN_EPISODES / 10)]
 
 P_CHAR = '-'
 
-# ENV_EXP = [0.2]
+ENV_EXP = [0.0, 0.2, 0.5]
 
 N_ENVS = 1
 
