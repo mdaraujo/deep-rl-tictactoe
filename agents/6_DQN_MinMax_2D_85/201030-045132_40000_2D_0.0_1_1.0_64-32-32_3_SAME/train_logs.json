@@ -1,0 +1,30 @@
+{
+    "end_episode": 40000,
+    "end_score": 75.69,
+    "best_score": 85.48,
+    "total_states": 1422,
+    "elapsed_time": 6954,
+    "elapsed_time_h": "1:55:54",
+    "save_logs": [
+        {
+            "episode": 4000,
+            "best_score": 60.94
+        },
+        {
+            "episode": 8000,
+            "best_score": 78.8
+        },
+        {
+            "episode": 12000,
+            "best_score": 82.78
+        },
+        {
+            "episode": 20000,
+            "best_score": 82.78
+        },
+        {
+            "episode": 24000,
+            "best_score": 85.48
+        }
+    ]
+}

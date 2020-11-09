@@ -1,0 +1,46 @@
+{
+    "end_episode": 40000,
+    "end_score": 76.23,
+    "best_score": 76.23,
+    "total_states": 4087,
+    "elapsed_time": 4884,
+    "elapsed_time_h": "1:21:24",
+    "save_logs": [
+        {
+            "episode": 4000,
+            "best_score": -21.17
+        },
+        {
+            "episode": 8000,
+            "best_score": -9.45
+        },
+        {
+            "episode": 12000,
+            "best_score": -4.77
+        },
+        {
+            "episode": 16000,
+            "best_score": 8.9
+        },
+        {
+            "episode": 20000,
+            "best_score": 11.21
+        },
+        {
+            "episode": 24000,
+            "best_score": 14.07
+        },
+        {
+            "episode": 28000,
+            "best_score": 59.22
+        },
+        {
+            "episode": 32000,
+            "best_score": 74.58
+        },
+        {
+            "episode": 40000,
+            "best_score": 76.23
+        }
+    ]
+}

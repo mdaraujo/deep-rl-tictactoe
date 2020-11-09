@@ -1,0 +1,7 @@
+Episodes,FirstPlayer,SecondPlayer,Wins,Draws,Losses,Invalids,MeanReward,PartialScore,Score,TrainEpisode,TrainTime,TrainStates,NewTestStates,TotalTestStates,NewEnvStates,EnvAgentStates,SumEnvStates,TestTime,TotalTestTime,alg,env_agent,train_episodes,eval_freq,obs_format,env_exploration_rate,n_envs,gamma,net_arch,filter_size,pad,r_win,r_draw,r_still_playing,r_lose,r_invalid,player_one_char,datetime
+10,DQN,Random,100.00,0.00,0.00,0.00,2.00,100.00,93.75,,,,19,19,10,10,79,0:00:01,0:00:03,DQN,Self,40000,4000,2D,0.2,1,1.0,"[64, 32, 32]",3,SAME,2,1,0,-1,-2,-,2020-11-01T06:23:02
+10,Random,DQN,90.00,10.00,0.00,0.00,1.90,95.00,93.75,,,,33,52,25,25,79,0:00:00,0:00:03,DQN,Self,40000,4000,2D,0.2,1,1.0,"[64, 32, 32]",3,SAME,2,1,0,-1,-2,-,2020-11-01T06:23:02
+10,DQN,MinMax,0.00,100.00,0.00,0.00,1.00,100.00,93.75,,,,7,59,10,10,79,0:00:00,0:00:03,DQN,Self,40000,4000,2D,0.2,1,1.0,"[64, 32, 32]",3,SAME,2,1,0,-1,-2,-,2020-11-01T06:23:02
+10,MinMax,DQN,0.00,90.00,10.00,0.00,0.80,80.00,93.75,,,,21,80,34,34,79,0:00:01,0:00:03,DQN,Self,40000,4000,2D,0.2,1,1.0,"[64, 32, 32]",3,SAME,2,1,0,-1,-2,-,2020-11-01T06:23:02
+10,DQN,DQN,0.00,100.00,0.00,0.00,1.00,,93.75,,,,8,88,8,88,79,0:00:00,0:00:03,DQN,Self,40000,4000,2D,0.2,1,1.0,"[64, 32, 32]",3,SAME,2,1,0,-1,-2,-,2020-11-01T06:23:02
+
