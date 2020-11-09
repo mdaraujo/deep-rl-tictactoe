@@ -91,3 +91,14 @@ if __name__ == "__main__":
     minmax_2d = [85.48, 86.03, 85.1, 84.51, 85.21]
 
     print_t_test("OneHot vs 2D:", minmax_oh_32, minmax_2d)
+
+    ###
+    minmax_2d_0_2 = [98.42, 98.54, 98.44, 98.61, 98.41]
+
+    print_t_test("MinMax 2D 0.0 vs 0.2:", minmax_2d, minmax_2d_0_2)
+
+    ###
+    self_0_0 = [97.2, 85.56, 92.1, 96.43, 93.33]
+    self_0_2 = [98.06, 98.65, 98.64, 98.0, 98.48]
+
+    print_t_test("Self 2D 0.0 vs 0.2:", self_0_0, self_0_2)
