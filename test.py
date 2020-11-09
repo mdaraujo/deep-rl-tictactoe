@@ -18,8 +18,8 @@ def main():
                         help="Number of test episodes (default: 2500)")
     parser.add_argument("-v", "--verbose", action="store_true",
                         help="Print game boards (default: Don't print)")
-    parser.add_argument('-s', '--model_suffix', type=str, default="",
-                        help="Use a suffix for the model file e.g _best (default: )")
+    parser.add_argument('-s', '--model_suffix', type=str, default="_best",
+                        help="Use a suffix for the model file (default: _best)")
     args = parser.parse_args()
 
     log_dir = args.logdir
