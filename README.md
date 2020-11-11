@@ -19,7 +19,7 @@ The goal is the RL agent can be perfect vs MinMax and still beat the Random play
 
     Python >= 3.5
     Gym
-    Stabe-Baselines
+    Stabe-Baselines==2.9.0
 
 ## Gym TicTacToe Installation
 
